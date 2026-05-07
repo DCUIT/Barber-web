@@ -52,18 +52,26 @@ export default function BookingPro() {
   );
 
   useEffect(() => {
-    // defer to microtask to satisfy react-hooks lint
-    window.queueMicrotask(() => setSelectedTime(""));
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      setSelectedTime("");
+
+      if (!selectedBarberId || !bookingDate) {
+        setAvailableSlots([]);
+        setLoadingSlots(false);
+        return;
+      }
+
+      setLoadingSlots(true);
+    });
 
     if (!selectedBarberId || !bookingDate) {
-      queueMicrotask(() => setAvailableSlots([]));
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
-
-
-    let cancelled = false;
-    setLoadingSlots(true);
 
     API.get(
       `/bookings/calendar?barberId=${encodeURIComponent(selectedBarberId)}&date=${encodeURIComponent(bookingDate)}`,

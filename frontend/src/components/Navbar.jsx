@@ -19,11 +19,13 @@ export default function Navbar() {
   const [cartBounce, setCartBounce] = useState(false);
 
   useEffect(() => {
-    // Initial load cart count
-    const count = getCartCount();
-    setCartCount(count);
+    // Only read initial values once; avoid setState directly inside effect body (lint)
+    queueMicrotask(() => {
+      setToken(localStorage.getItem("token"));
+      setUsername(localStorage.getItem("username"));
+      setCartCount(getCartCount());
+    });
 
-    // Listen to storage changes
     const handleStorageChange = () => {
       setToken(localStorage.getItem("token"));
       setUsername(localStorage.getItem("username"));

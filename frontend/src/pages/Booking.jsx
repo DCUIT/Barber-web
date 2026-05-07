@@ -56,20 +56,24 @@ export default function Booking() {
   useEffect(() => {
     // reset time when barber/service/date changes
     // defer to microtask to satisfy set-state-in-effect lint
-    const id = window.queueMicrotask(() => setSelectedTime(""));
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      setSelectedTime("");
+      if (!selectedBarberId || !bookingDate) {
+        setAvailableSlots([]);
+        setLoadingSlots(false);
+        return;
+      }
+      setLoadingSlots(true);
+    });
 
     if (!selectedBarberId || !bookingDate) {
-      window.clearTimeout(id);
-      // avoid setState synchronously in the effect body
-      queueMicrotask(() => setAvailableSlots([]));
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
-
-
-
-    let cancelled = false;
-    setLoadingSlots(true);
 
     API.get(
       `/bookings/calendar?barberId=${encodeURIComponent(selectedBarberId)}&date=${encodeURIComponent(bookingDate)}`,

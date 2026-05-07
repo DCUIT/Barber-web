@@ -1,5 +1,28 @@
 import { useEffect, useState } from 'react';
+
 import { useNavigate } from 'react-router-dom';
+
+function Confetti() {
+  // Deterministic (no Math.random) to satisfy react-hooks/purity
+  return (
+    <div className="absolute inset-0 pointer-events-none">
+      {[...Array(50)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute animate-bounce"
+          style={{
+            left: `${(i % 10) * 10}%`,
+            top: `${Math.floor(i / 10) * 20}%`,
+            animationDelay: `${(i % 5) * 0.2}s`,
+            animationDuration: `${2 + (i % 5) * 0.3}s`,
+          }}
+        >
+          <div className="w-2 h-2 rounded-full bg-yellow-400" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Success() {
   const navigate = useNavigate();
@@ -31,26 +54,7 @@ export default function Success() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center px-4 relative overflow-hidden">
       {/* Confetti effect - only show for 2 seconds */}
       {showConfetti && (
-        <div className="absolute inset-0 pointer-events-none">
-          {[...Array(50)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute animate-bounce"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${2 + Math.random() * 2}s`,
-              }}
-            >
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  ['bg-red-400', 'bg-blue-400', 'bg-yellow-400', 'bg-green-400', 'bg-purple-400'][Math.floor(Math.random() * 5)]
-                }`}
-              />
-            </div>
-          ))}
-        </div>
+        <Confetti />
       )}
 
       <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center animate-fadeIn relative z-10">

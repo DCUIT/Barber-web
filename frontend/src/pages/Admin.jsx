@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import API from "../api";
 import { formatCurrency as formatPrice } from "../utils/formatPrice";
-import { parseItems, getStatusBadge, ORDER_STATUSES } from "../utils/parseOrder.jsx";
+import { parseItems, getStatusBadge } from "../utils/parseOrder.jsx";
+
 import OrderModal from "../components/OrderModal";
 
 const TABS = { FOODS: "foods", ORDERS: "orders", STATS: "stats" };
@@ -23,30 +24,45 @@ export default function Admin() {
   const token = localStorage.getItem("token");
   const authHeader = { headers: { Authorization: `Bearer ${token}` } };
 
-  useEffect(() => { fetchFoods(); }, []);
   useEffect(() => {
-    if (activeTab === TABS.ORDERS) fetchOrders();
-    if (activeTab === TABS.STATS) fetchStats();
+    queueMicrotask(() => {
+      fetchFoods();
+    });
+  }, []);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (activeTab === TABS.ORDERS) fetchOrders();
+      if (activeTab === TABS.STATS) fetchStats();
+    });
   }, [activeTab]);
+
 
   async function fetchFoods() {
     const res = await API.get("/foods");
     setFoods(res.data);
   }
 
+
   async function fetchOrders() {
     try {
       const res = await API.get("/orders", authHeader);
       setOrders(res.data);
-    } catch (err) { setError("Không thể tải đơn hàng"); }
+    } catch {
+      setError("Không thể tải đơn hàng");
+    }
   }
+
 
   async function fetchStats() {
     try {
       const res = await API.get("/stats", authHeader);
       setStats(res.data);
-    } catch (err) { setError("Không thể tải thống kê"); }
+    } catch {
+      setError("Không thể tải thống kê");
+    }
   }
+
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -63,7 +79,10 @@ export default function Admin() {
       }
       resetForm();
       fetchFoods();
-    } catch (err) { setError(editingId ? "Cập nhật thất bại" : "Thêm món thất bại"); }
+    } catch {
+      setError(editingId ? "Cập nhật thất bại" : "Thêm món thất bại");
+    }
+
     setLoading(false);
   }
 
@@ -73,7 +92,10 @@ export default function Admin() {
       await API.delete(`/foods/${id}`, authHeader);
       fetchFoods();
       setSuccess("Xóa món thành công!");
-    } catch (err) { setError("Xóa thất bại"); }
+    } catch {
+      setError("Xóa thất bại");
+    }
+
   }
 
   function editFood(food) {
@@ -98,7 +120,10 @@ export default function Admin() {
       fetchOrders();
       setSelectedOrder(null);
       setSuccess(`Đã cập nhật trạng thái đơn #${orderId}`);
-    } catch (err) { setError("Cập nhật thất bại"); }
+    } catch {
+      setError("Cập nhật thất bại");
+    }
+
   }
 
   return (

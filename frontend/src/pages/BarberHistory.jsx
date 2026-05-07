@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import API from "../api";
 import { useNavigate } from "react-router-dom";
 
-import { formatCurrency as formatPrice } from "../utils/formatPrice";
+
 
 export default function BarberHistory() {
   const navigate = useNavigate();
