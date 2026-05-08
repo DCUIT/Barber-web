@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import API from "../api";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client"; // Import socket.io-client
 
 const statusMap = {
   Pending: { bg: "bg-yellow-100", fg: "text-yellow-800", label: "Chờ xác nhận" },
@@ -15,11 +16,15 @@ const statusLabel = (s) => {
 
 export default function BarberHistory() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
 
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const authHeader = useMemo(
+    () => ({ headers: { Authorization: `Bearer ${token}` } }),
+    [token]
+  );
 
   useEffect(() => {
     if (!token) {
@@ -27,16 +32,45 @@ export default function BarberHistory() {
       return;
     }
 
-    const authHeader = { headers: { Authorization: `Bearer ${token}` } };
-
-    API.get("/bookings", authHeader)
-      .then((res) => setBookings(res.data || []))
-      .catch((e) => setError(e?.response?.data?.msg || "Không thể tải lịch"))
-      .finally(() => setLoading(false));
+    const handleAuthChange = () => {
+      const newToken = localStorage.getItem("token");
+      setToken(newToken);
+      if (!newToken) navigate("/login");
+    };
+    window.addEventListener("auth-change", handleAuthChange);
+    return () => window.removeEventListener("auth-change", handleAuthChange);
   }, [navigate, token]);
 
-  if (loading) return <div className="py-12 text-center">Đang tải...</div>;
+  const fetchBookings = useCallback(async () => {
+    if (!token) return; // Don't fetch if no token
+    setLoading(true);
+    try {
+      const res = await API.get("/bookings", authHeader);
+      setBookings(res.data || []);
+    } catch (e) {
+      setError(e?.response?.data?.msg || "Không thể tải lịch");
+    } finally {
+      setLoading(false);
+    }
+  }, [authHeader, token]); // Dependencies for useCallback
 
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]); // Depend on fetchBookings
+
+  // Socket.io integration
+  useEffect(() => {
+    const socket = io("http://localhost:4000"); // Connect to your backend socket server
+    socket.on('connect', () => console.log('Connected to Socket.io server from BarberHistory'));
+    socket.on('bookingUpdated', (updatedBooking) => {
+      console.log('Booking updated (BarberHistory):', updatedBooking);
+      fetchBookings(); // Refetch bookings to update the list
+    });
+    socket.on('disconnect', () => console.log('Disconnected from Socket.io server from BarberHistory'));
+    return () => { socket.disconnect(); }; // Clean up socket connection
+  }, [fetchBookings]); // Depend on fetchBookings
+
+  if (loading) return <div className="py-12 text-center">Đang tải...</div>;
   return (
     <div className="min-h-screen text-gray-800">
       <section className="py-10 text-center">

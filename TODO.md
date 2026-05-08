@@ -38,7 +38,7 @@
 - [x] Upload ảnh (services/barbers)
 - [x] Search/filter (bookings)
 - [x] Pagination (bookings)
-- [ ] Realtime booking (websocket/polling)
+- [x] Realtime booking (websocket/polling)
 - [ ] Deploy
 
 ## Step 7: Feature mạnh

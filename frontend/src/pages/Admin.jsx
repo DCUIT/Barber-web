@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import API from "../api";
 import { formatCurrency as formatPrice } from "../utils/formatPrice"; // Giả sử hàm này vẫn dùng được cho VNĐ
+import { io } from "socket.io-client"; // Import socket.io-client
 
 const TABS = { DASHBOARD: "dashboard", SERVICES: "services", BARBERS: "barbers", BOOKINGS: "bookings", USERS: "users" };
 
@@ -31,14 +32,18 @@ export default function Admin() {
   const [itemsPerPage] = useState(10); // Số lượng mục trên mỗi trang
   const [totalBookingsCount, setTotalBookingsCount] = useState(0);
 
-  const token = localStorage.getItem("token");
-  const authHeader = { headers: { Authorization: `Bearer ${token}` } };
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  const authHeader = useMemo(
+    () => ({ headers: { Authorization: `Bearer ${token}` } }),
+    [token]
+  );
 
-  useEffect(() => {
-    fetchData();
-  }, [activeTab]);
-
-  const fetchData = async () => {
+  // Make fetchData a useCallback to prevent unnecessary re-renders and issues with socket.io useEffect
+  const fetchData = useCallback(async () => {
+    if (!token) { // Ensure token exists before fetching data
+      // navigate("/login"); // Or handle re-authentication
+      return;
+    }
     setLoading(true);
     try {
       if (activeTab === TABS.DASHBOARD) {
@@ -84,7 +89,40 @@ export default function Admin() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, currentPage, itemsPerPage, searchTerm, filterBarberId, filterStatus, authHeader, token]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]); // Depend on fetchData
+
+  // Socket.io integration
+  useEffect(() => {
+    const socket = io("http://localhost:4000"); // Connect to your backend socket server
+
+    socket.on('connect', () => {
+      console.log('Connected to Socket.io server from Admin');
+    });
+
+    socket.on('newBooking', (newBooking) => {
+      console.log('New booking received:', newBooking);
+      if (activeTab === TABS.BOOKINGS) {
+        fetchData(); // Refetch data to include new booking
+      }
+    });
+
+    socket.on('bookingUpdated', (updatedBooking) => {
+      console.log('Booking updated:', updatedBooking);
+      if (activeTab === TABS.BOOKINGS) {
+        fetchData(); // Refetch data to update the list
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Disconnected from Socket.io server from Admin');
+    });
+
+    return () => { socket.disconnect(); }; // Clean up socket connection
+  }, [activeTab, fetchData]); // Depend on activeTab and fetchData
 
   const updateBookingStatus = async (id, status) => {
     try {

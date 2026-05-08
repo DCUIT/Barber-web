@@ -14,7 +14,9 @@ function minutesToTime(min) {
   return `${h}:${m}`;
 }
 
-export const bookingsRouter = express.Router();
+// Export a function that returns the router, accepting io as an argument
+export const createBookingsRouter = (io) => {
+  const bookingsRouter = express.Router();
 
 bookingsRouter.get('/calendar', requireAuth, async (req, res) => {
   const { barberId, date } = req.query;
@@ -54,7 +56,7 @@ bookingsRouter.get('/', requireAuth, async (req, res) => {
   res.json(mine);
 });
 
-bookingsRouter.post('/', requireAuth, async (req, res) => {
+  bookingsRouter.post('/', requireAuth, async (req, res) => {
   const userId = req.user.id;
   const { barberId, serviceId, bookingDate, bookingTime, note } = req.body;
   if (!barberId || !serviceId || !bookingDate || !bookingTime) {
@@ -84,10 +86,13 @@ bookingsRouter.post('/', requireAuth, async (req, res) => {
     status: 'Pending'
   });
 
+    // Emit new booking event
+    io.emit('newBooking', booking); // Emit to all connected clients
+
   res.json(booking);
 });
 
-bookingsRouter.put('/:id/status', requireAuth, requireRole(['admin','barber']), async (req, res) => {
+  bookingsRouter.put('/:id/status', requireAuth, requireRole(['admin','barber']), async (req, res) => {
   const booking = await Booking.findById(req.params.id);
   if (!booking) return res.status(404).json({ msg: 'Not found' });
 
@@ -98,6 +103,12 @@ bookingsRouter.put('/:id/status', requireAuth, requireRole(['admin','barber']), 
 
   booking.status = status;
   await booking.save();
+
+    // Emit booking updated event
+    io.emit('bookingUpdated', booking); // Emit to all connected clients
+
   res.json(booking);
 });
 
+  return bookingsRouter;
+};

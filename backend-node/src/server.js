@@ -7,6 +7,8 @@ import { uploadRouter } from './routes/upload.routes.js';
 import { barbersRouter } from './routes/barbers.routes.js';
 import { bookingsRouter } from './routes/bookings.routes.js';
 import { seedDatabase } from './routes/seed.js';
+import { createServer } from 'http'; // Import http server
+import { Server } from 'socket.io'; // Import Socket.io Server
 
 
 dotenv.config();
@@ -14,6 +16,13 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+const httpServer = createServer(app); // Create HTTP server
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*", // Allow all origins for development
+    methods: ["GET", "POST", "PUT", "DELETE"]
+  }
+}); // Initialize Socket.io
 
 
 app.get('/', (req, res) => {
@@ -24,7 +33,7 @@ app.use('/auth', authRouter);
 app.use('/services', servicesRouter);
 app.use('/barbers', barbersRouter);
 app.use('/upload', uploadRouter); // Thêm route upload ảnh
-app.use('/bookings', bookingsRouter);
+app.use('/bookings', bookingsRouter(io)); // Pass io instance to bookingsRouter
 
 const PORT = process.env.PORT || 4000;
 
@@ -46,7 +55,6 @@ if (driver === 'sqlite') {
   await seedDatabase();
 }
 
-
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => { // Listen on httpServer
   console.log(`Node API running on http://localhost:${PORT} (driver=${driver})`);
 });
