@@ -118,7 +118,7 @@ export default function Booking() {
 
   async function handleConfirm() {
     if (!selectedServiceId || !selectedBarberId || !bookingDate || !selectedTime) {
-      toast.error("Vui lòng chọn đầy đủ dịch vụ, thợ, ngày và giờ.");
+      toast.error("Please select service, staff, date and time.");
       return;
     }
 
@@ -136,11 +136,12 @@ export default function Booking() {
         authHeader
       );
 
-      toast.success("Đặt lịch thành công!");
+      toast.success("Booking confirmed!");
       setLastBooking(res.data);
       setShowSuccessModal(true);
       setNote("");
       setSelectedTime("");
+
       // reload slots
       API.get(
         `/bookings/calendar?barberId=${encodeURIComponent(selectedBarberId)}&date=${encodeURIComponent(bookingDate)}`,
@@ -159,12 +160,12 @@ export default function Booking() {
       {/* Booking Form Area */}
       <section id="booking" className="services">
         <div className="booking-form">
-          <h3>ĐẶT LỊCH HẸN</h3>
+            <h3>BOOK AN APPOINTMENT</h3>
           
           <div className="form-group">
-            <label>1. CHỌN DỊCH VỤ</label>
+            <label>1. SELECT SERVICE</label>
             <select value={selectedServiceId} onChange={(e) => setSelectedServiceId(e.target.value)}>
-              <option value="">Chọn dịch vụ...</option>
+              <option value="">Select a service...</option>
               {services.map((s) => (
                 <option key={s._id} value={s._id}>
                   {s.name} - {new Intl.NumberFormat("vi-VN").format(s.price)}đ
@@ -174,9 +175,9 @@ export default function Booking() {
           </div>
 
           <div className="form-group">
-            <label>2. CHỌN STYLIST</label>
+            <label>2. SELECT STAFF</label>
             <select value={selectedBarberId} onChange={(e) => setSelectedBarberId(e.target.value)}>
-              <option value="">Chọn stylist...</option>
+              <option value="">Select staff...</option>
               {barbers.map((b) => (
                 <option key={b._id} value={b._id}>
                   {b.name} ({b.specialty || "Barber"})
@@ -186,16 +187,17 @@ export default function Booking() {
           </div>
 
           <div className="form-group">
-            <label>3. CHỌN NGÀY & GIỜ</label>
+            <label>3. SELECT DATE & TIME</label>
             <input type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} />
 
             <div className="time-slots" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "15px" }}>
               {availableSlots.length === 0 ? (
-                <div className="text-gray-500 text-center py-2" style={{ gridColumn: "span 2" }}>
-                  {loadingSlots ? "Đang tải khung giờ..." : "Không có khung giờ trống"}
+              <div className="text-gray-500 text-center py-2" style={{ gridColumn: "span 2" }}>
+                  {loadingSlots ? "Loading time slots..." : "No available time slots"}
                 </div>
               ) : (
                 availableSlots.map((t) => (
+
                   <button
                     key={t}
                     type="button"
@@ -247,20 +249,20 @@ export default function Booking() {
             <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fas fa-check text-3xl"></i>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">ĐẶT LỊCH THÀNH CÔNG!</h2>
-            <p className="text-gray-500 mb-6 text-sm">Cảm ơn bạn đã tin tưởng The Cutting Edge.</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Booking Successful!</h2>
+            <p className="text-gray-500 mb-6 text-sm">Thank you for trusting The Cutting Edge.</p>
             
             <div className="bg-gray-50 rounded-xl p-4 text-left space-y-2 mb-6">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Dịch vụ:</span>
+                <span className="text-gray-400">Service:</span>
                 <span className="font-bold">{selectedService?.name}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Stylist:</span>
+                <span className="text-gray-400">Staff:</span>
                 <span className="font-bold">{barbers.find(b => b._id === selectedBarberId)?.name}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Thời gian:</span>
+                <span className="text-gray-400">Time:</span>
                 <span className="font-bold text-[#d4a373]">{lastBooking.bookingTime} - {lastBooking.bookingDate}</span>
               </div>
             </div>
@@ -269,8 +271,9 @@ export default function Booking() {
               onClick={() => setShowSuccessModal(false)}
               className="w-full btn-submit m-0 py-3"
             >
-              ĐÓNG
+              Close
             </button>
+
           </div>
         </div>
       )}

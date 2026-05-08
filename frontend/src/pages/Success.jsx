@@ -64,30 +64,31 @@ export default function Success() {
         <div className="text-6xl text-green-500 mb-4 animate-pulse">
           <i className="fas fa-check-circle"></i>
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Đặt hàng thành công!</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">Booking Successful!</h1>
         <p className="text-gray-600 mb-8 leading-relaxed">
-          Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn sẽ được xử lý trong thời gian sớm nhất.
-          Bạn sẽ nhận được thông tin chi tiết qua email hoặc tin nhắn.
+          Thank you for trusting our service. Your appointment has been recorded.
+          You can view the details in your booking history.
         </p>
         <div className="space-y-4">
           <button
-            onClick={() => navigate('/my-orders')}
+            onClick={() => navigate('/my-bookings')}
             className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
           >
             <i className="fas fa-list mr-2"></i>
-            Xem đơn hàng
+            View My Bookings
           </button>
           <button
             onClick={() => navigate('/')}
             className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
           >
-            <i className="fas fa-shopping-bag mr-2"></i>
-            Tiếp tục mua sắm
+            <i className="fas fa-home mr-2"></i>
+            Back to Home
           </button>
         </div>
         <p className="text-sm text-gray-500 mt-6">
-          Trang này sẽ tự động chuyển về trang chủ sau {countdown} giây...
+          This page will automatically redirect to home after {countdown} seconds...
         </p>
+
       </div>
     </div>
   );

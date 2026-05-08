@@ -6,6 +6,14 @@ import toast from "react-hot-toast";
 
 const TABS = { DASHBOARD: "dashboard", SERVICES: "services", BARBERS: "barbers", BOOKINGS: "bookings", USERS: "users" };
 
+const TAB_LABELS = {
+  [TABS.DASHBOARD]: "Bảng điều khiển",
+  [TABS.BOOKINGS]: "Quản lý lịch hẹn",
+  [TABS.SERVICES]: "Quản lý dịch vụ",
+  [TABS.BARBERS]: "Đội ngũ Stylists",
+  [TABS.USERS]: "Quản lý người dùng"
+};
+
 export default function Admin() {
   const [activeTab, setActiveTab] = useState(TABS.DASHBOARD);
   const [services, setServices] = useState([]);
@@ -96,6 +104,11 @@ export default function Admin() {
   useEffect(() => {
     fetchData();
   }, [fetchData]); // Depend on fetchData
+
+  // Cập nhật tiêu đề trang web tương ứng với tab đang chọn
+  useEffect(() => {
+    document.title = `${TAB_LABELS[activeTab]} | The Cutting Edge Admin`;
+  }, [activeTab]);
 
   // Socket.io integration
   useEffect(() => {
@@ -251,22 +264,22 @@ export default function Admin() {
     <div className="flex min-h-screen bg-gray-100 text-gray-800">
       {/* SIDEBAR */}
       <aside className="w-64 bg-black text-white p-6 hidden md:block">
-        <div className="text-[#d4a373] font-bold text-xl mb-10 tracking-widest uppercase">Admin Panel</div>
+        <div className="text-[#d4a373] font-bold text-xl mb-10 tracking-widest uppercase">Hệ Thống Barber</div>
         <nav className="space-y-4">
           <button onClick={() => setActiveTab(TABS.DASHBOARD)} className={`w-full text-left p-3 rounded ${activeTab === TABS.DASHBOARD ? "bg-[#d4a373] text-black" : "hover:bg-gray-900"}`}>
-            <i className="fas fa-chart-line mr-3"></i> Dashboard
+            <i className="fas fa-chart-line mr-3"></i> Thống kê
           </button>
           <button onClick={() => setActiveTab(TABS.BOOKINGS)} className={`w-full text-left p-3 rounded ${activeTab === TABS.BOOKINGS ? "bg-[#d4a373] text-black" : "hover:bg-gray-900"}`}>
-            <i className="fas fa-calendar-alt mr-3"></i> Bookings
+            <i className="fas fa-calendar-alt mr-3"></i> Lịch hẹn
           </button>
           <button onClick={() => setActiveTab(TABS.SERVICES)} className={`w-full text-left p-3 rounded ${activeTab === TABS.SERVICES ? "bg-[#d4a373] text-black" : "hover:bg-gray-900"}`}>
             <i className="fas fa-cut mr-3"></i> Dịch vụ
           </button>
           <button onClick={() => setActiveTab(TABS.BARBERS)} className={`w-full text-left p-3 rounded ${activeTab === TABS.BARBERS ? "bg-[#d4a373] text-black" : "hover:bg-gray-900"}`}>
-            <i className="fas fa-user-friends mr-3"></i> Barbers
+            <i className="fas fa-user-friends mr-3"></i> Stylists
           </button>
           <button onClick={() => setActiveTab(TABS.USERS)} className={`w-full text-left p-3 rounded ${activeTab === TABS.USERS ? "bg-[#d4a373] text-black" : "hover:bg-gray-900"}`}>
-            <i className="fas fa-users mr-3"></i> Users
+            <i className="fas fa-users mr-3"></i> Người dùng
           </button>
         </nav>
       </aside>
@@ -274,8 +287,8 @@ export default function Admin() {
       {/* MAIN CONTENT */}
       <main className="flex-1 p-8 text-gray-800">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 capitalize">{activeTab}</h2>
-          <div className="text-gray-600">Xin chào, Admin</div>
+          <h2 className="text-3xl font-bold text-gray-800">{TAB_LABELS[activeTab]}</h2>
+          <div className="text-gray-600 font-medium">Chào mừng, Quản trị viên</div>
         </div>
 
         {error && <div className="bg-red-100 text-red-700 p-4 rounded mb-6">{error}</div>}
@@ -285,19 +298,19 @@ export default function Admin() {
         {activeTab === TABS.DASHBOARD && stats && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
-              <div className="text-gray-500 text-sm uppercase font-bold">Total Bookings</div>
+              <div className="text-gray-500 text-sm uppercase font-bold">Tổng lịch hẹn</div>
               <div className="text-3xl font-bold">{stats.totalBookings}</div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-              <div className="text-gray-500 text-sm uppercase font-bold">Revenue</div>
+              <div className="text-gray-500 text-sm uppercase font-bold">Doanh thu</div>
               <div className="text-3xl font-bold">{formatPrice(stats.totalRevenue)}</div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-              <div className="text-gray-500 text-sm uppercase font-bold">Total Users</div>
+              <div className="text-gray-500 text-sm uppercase font-bold">Tổng khách hàng</div>
               <div className="text-3xl font-bold">{stats.totalUsers}</div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
-              <div className="text-gray-500 text-sm uppercase font-bold">Total Barbers</div>
+              <div className="text-gray-500 text-sm uppercase font-bold">Tổng Stylists</div>
               <div className="text-3xl font-bold">{stats.totalBarbers}</div>
             </div>
           </div>
@@ -424,8 +437,8 @@ export default function Admin() {
             <table className="w-full text-left">
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="p-4 font-bold">Username</th>
-                  <th className="p-4 font-bold">Role</th>
+                  <th className="p-4 font-bold">Tài khoản</th>
+                  <th className="p-4 font-bold">Vai trò</th>
                   <th className="p-4 font-bold">Hành động</th>
                   <th className="p-4 font-bold">ID</th>
                 </tr>

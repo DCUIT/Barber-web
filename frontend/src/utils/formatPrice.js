@@ -1,6 +1,6 @@
 /**
  * Utility định dạng tiền tệ - thống nhất 1 nơi
- * Phù hợp cho việc hiển thị giá dịch vụ Barber
+ * Phù hợp cho việc hiển thị giá dịch vụ Barber.
  */
 
 /**
