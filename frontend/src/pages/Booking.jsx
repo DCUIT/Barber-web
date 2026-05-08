@@ -19,7 +19,6 @@ function formatDateInput(d) {
 
 export default function Booking() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
   const [token] = useState(() => localStorage.getItem("token"));
 
   const [services, setServices] = useState([]);
@@ -60,25 +59,9 @@ export default function Booking() {
   );
 
   useEffect(() => {
-    // reset time when barber/service/date changes
-    // defer to microtask to satisfy set-state-in-effect lint
-    let cancelled = false;
     setSelectedTime("");
 
-    queueMicrotask(() => {
-      setSelectedTime("");
-      if (!selectedBarberId || !bookingDate) {
-        setAvailableSlots([]);
-        setLoadingSlots(false);
-        return;
-      }
-      setLoadingSlots(true);
-    });
-
     if (!selectedBarberId || !bookingDate) {
-      return () => {
-        cancelled = true;
-      };
       setAvailableSlots([]);
       return;
     }
@@ -91,22 +74,16 @@ export default function Booking() {
       authHeader
     )
       .then((res) => {
-        if (cancelled) return;
-        setAvailableSlots(res.data?.slots || []);
         if (!cancelled) {
           setAvailableSlots(res.data?.slots || []);
         }
       })
       .catch(() => {
-        if (cancelled) return;
-        setAvailableSlots([]);
         if (!cancelled) {
           setAvailableSlots([]);
         }
       })
       .finally(() => {
-        if (cancelled) return;
-        setLoadingSlots(false);
         if (!cancelled) {
           setLoadingSlots(false);
         }
@@ -161,10 +138,6 @@ export default function Booking() {
   return (
     <div className="min-h-screen">
       {/* Booking Form Area */}
-      <section id="booking" className="booking-container">
-        <div className="booking-card">
-          <div className="step">
-            <h3>1. CHỌN DỊCH VỤ</h3>
       <section id="booking" className="services" style={{ background: "transparent", padding: "40px 20px" }}>
         <div className="booking-form" style={{ margin: "0 auto" }}>
           <h3 style={{ textAlign: "center", marginBottom: "30px" }}>ĐẶT LỊCH HẸN</h3>
@@ -175,40 +148,30 @@ export default function Booking() {
               <option value="">Chọn dịch vụ...</option>
               {services.map((s) => (
                 <option key={s._id} value={s._id}>
-                  {s.name}
                   {s.name} - {new Intl.NumberFormat("vi-VN").format(s.price)}đ
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="step">
-            <h3>2. CHỌN STYLIST</h3>
           <div className="form-group">
             <label>2. CHỌN STYLIST</label>
             <select value={selectedBarberId} onChange={(e) => setSelectedBarberId(e.target.value)}>
               <option value="">Chọn stylist...</option>
               {barbers.map((b) => (
                 <option key={b._id} value={b._id}>
-                  {b.name}
                   {b.name} ({b.specialty || "Barber"})
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="step">
-            <h3>3. CHỌN NGÀY & GIỜ</h3>
           <div className="form-group">
             <label>3. CHỌN NGÀY & GIỜ</label>
             <input type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} />
 
-            <div className="time-slots">
             <div className="time-slots" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "15px" }}>
               {availableSlots.length === 0 ? (
-                <button className="slot" type="button" disabled>
-                  {loadingSlots ? "Đang tải..." : "Chưa có giờ"}
-                </button>
                 <div className="text-gray-500 text-center py-2" style={{ gridColumn: "span 2" }}>
                   {loadingSlots ? "Đang tải khung giờ..." : "Không có khung giờ trống"}
                 </div>
@@ -217,7 +180,6 @@ export default function Booking() {
                   <button
                     key={t}
                     type="button"
-                    className={`slot ${selectedTime === t ? "active" : ""}`}
                     className={`btn-submit ${selectedTime === t ? "" : "opacity-50"}`}
                     style={{ margin: 0, padding: "8px", fontSize: "14px", background: selectedTime === t ? "#d4a373" : "#333", color: "white" }}
                     onClick={() => setSelectedTime(t)}
@@ -251,14 +213,6 @@ export default function Booking() {
           </button>
         </div>
       </section>
-
-      {/* Confirm button (kept outside template card, but uses same style rule) */}
-      <div style={{ display: "flex", justifyContent: "center", marginTop: "-10px" }}>
-        <button className="btn-confirm" type="button" disabled={submitting} onClick={handleConfirm}>
-          {submitting ? "Đang đặt..." : "XÁC NHẬN ĐẶT LỊCH"}
-        </button>
-      </div>
-
       {toast.open && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast({ ...toast, open: false })} />
       )}
