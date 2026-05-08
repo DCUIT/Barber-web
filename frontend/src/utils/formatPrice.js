@@ -1,6 +1,6 @@
 /**
  * Utility định dạng tiền tệ - thống nhất 1 nơi
- * Thay thế code trùng lặp ở Admin.jsx, Cart.jsx, Menu.jsx, Payment.jsx, FoodCard.jsx
+ * Phù hợp cho việc hiển thị giá dịch vụ Barber
  */
 
 /**
@@ -26,16 +26,6 @@ export function formatCurrency(price) {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(0);
   }
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-}
-
-/**
- * Tính tổng tiền giỏ hàng
- * @param {Array} items - Mảng items [{price, quantity}, ...]
- * @returns {number} Tổng tiền
- */
-export function calculateTotal(items) {
-  if (!items || !Array.isArray(items)) return 0;
-  return items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0);
 }
 
 export default formatPrice;
