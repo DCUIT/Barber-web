@@ -7,10 +7,12 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [username, setUsername] = useState(() => localStorage.getItem("username"));
+  const [role, setRole] = useState(() => localStorage.getItem("role"));
 
   const updateAuth = useCallback(() => {
     setToken(localStorage.getItem("token"));
     setUsername(localStorage.getItem("username"));
+    setRole(localStorage.getItem("role"));
   }, []);
 
   useEffect(() => {
@@ -26,6 +28,7 @@ export default function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
+    localStorage.removeItem("role");
     updateAuth();
     navigate("/");
   };
@@ -63,6 +66,15 @@ export default function Navbar() {
                   title="Quản trị"
                 >
                   <i className="fas fa-cog text-xl"></i>
+                </Link>
+              )}
+              {role === "barber" && (
+                <Link
+                  to="/my-bookings" // Thợ có thể xem lịch cần làm ở đây
+                  className="text-blue-400 hover:text-blue-500 font-semibold"
+                  title="Lịch làm việc"
+                >
+                  <i className="fas fa-cut text-xl"></i>
                 </Link>
               )}
               <span className="text-white font-semibold hidden sm:inline">{username}</span>

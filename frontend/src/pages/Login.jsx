@@ -26,6 +26,7 @@ export default function Login() {
       const token = res.data.access_token || res.data.token;
       localStorage.setItem("token", token);
       localStorage.setItem("username", res.data.username || username);
+      localStorage.setItem("role", res.data.role || "user");
       
       window.dispatchEvent(new Event("auth-change")); // Thông báo cho Navbar cập nhật
       alert("Đăng nhập thành công!");
