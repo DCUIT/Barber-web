@@ -61,7 +61,7 @@ export default function Login() {
 
   return (
     <div className="flex justify-center items-center min-h-[70vh]">
-      <div className="bg-[#1a1a1a] border border-[#d4a373]/30 p-8 rounded-lg shadow-2xl w-full max-w-sm text-white">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm text-black">
         {/* Tab chuyển đổi Đăng nhập / Đăng ký */}
         <div className="flex mb-6 border-b">
           <button
@@ -84,7 +84,7 @@ export default function Login() {
             <div className="mb-4">
               <label className="block mb-1">Tài khoản</label>
               <input
-                className="w-full px-3 py-2 border border-gray-700 rounded bg-[#252525] text-white focus:border-[#d4a373] outline-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-black focus:border-blue-500 outline-none"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 required
@@ -94,7 +94,7 @@ export default function Login() {
               <label className="block mb-1">Mật khẩu</label>
               <input
                 type="password"
-                className="w-full px-3 py-2 border rounded dark:bg-gray-700"
+                className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-black focus:border-blue-500 outline-none"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
@@ -103,7 +103,7 @@ export default function Login() {
             {error && <div className="text-red-500 mb-2 text-sm">{error}</div>}
             <button
               type="submit"
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-white font-semibold py-2 rounded"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded"
               disabled={loading}
             >
               {loading ? "Đang đăng nhập..." : "Đăng nhập"}
@@ -115,7 +115,7 @@ export default function Login() {
             <div className="mb-4">
               <label className="block mb-1">Tài khoản</label>
               <input
-                className="w-full px-3 py-2 border rounded dark:bg-gray-700"
+                className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-black focus:border-blue-500 outline-none"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 required
@@ -125,7 +125,7 @@ export default function Login() {
               <label className="block mb-1">Mật khẩu</label>
               <input
                 type="password"
-                className="w-full px-3 py-2 border rounded dark:bg-gray-700"
+                className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-black focus:border-blue-500 outline-none"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
@@ -135,7 +135,7 @@ export default function Login() {
             {success && <div className="text-green-500 mb-2 text-sm">{success}</div>}
             <button
               type="submit"
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-white font-semibold py-2 rounded"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded"
               disabled={loading}
             >
               {loading ? "Đang đăng ký..." : "Đăng ký"}

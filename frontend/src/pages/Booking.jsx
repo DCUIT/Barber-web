@@ -138,9 +138,9 @@ export default function Booking() {
   return (
     <div className="min-h-screen">
       {/* Booking Form Area */}
-      <section id="booking" className="services" style={{ background: "transparent", padding: "40px 20px" }}>
-        <div className="booking-form" style={{ margin: "0 auto" }}>
-          <h3 style={{ textAlign: "center", marginBottom: "30px" }}>ĐẶT LỊCH HẸN</h3>
+      <section id="booking" className="services">
+        <div className="booking-form">
+          <h3>ĐẶT LỊCH HẸN</h3>
           
           <div className="form-group">
             <label>1. CHỌN DỊCH VỤ</label>
@@ -181,7 +181,14 @@ export default function Booking() {
                     key={t}
                     type="button"
                     className={`btn-submit ${selectedTime === t ? "" : "opacity-50"}`}
-                    style={{ margin: 0, padding: "8px", fontSize: "14px", background: selectedTime === t ? "#d4a373" : "#333", color: "white" }}
+                    style={{
+                      margin: 0, 
+                      padding: "8px", 
+                      fontSize: "14px", 
+                      background: selectedTime === t ? "#d4a373" : "#333", 
+                      color: selectedTime === t ? "black" : "white",
+                      fontWeight: "bold"
+                    }}
                     onClick={() => setSelectedTime(t)}
                   >
                     {t}
@@ -198,7 +205,7 @@ export default function Booking() {
               placeholder="Bạn có yêu cầu gì đặc biệt không?"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              style={{ width: "100%", padding: "10px", borderRadius: "4px", border: "none" }}
+              /* Removed inline style for border, let CSS handle it */
             />
           </div>
 

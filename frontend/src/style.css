@@ -7,11 +7,9 @@
 body {
   font-family: "Arial", sans-serif;
   margin: 0;
-  background-color: #0c0c0c;
-  /* Họa tiết vải/da tối màu giúp giao diện có chiều sâu hơn */
-  background-image: url("https://www.transparenttextures.com/patterns/black-linen.png");
-  color: #f0f0f0;
-  min-h-screen;
+    background-color: #f4f4f4;
+    color: #333; /* Default text color for light theme */
+  min-height: 100vh;
 }
 
 /* Wrapper cho trang chủ */
@@ -25,7 +23,7 @@ header {
   color: white;
   padding: 20px 50px;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
 }
 
@@ -43,7 +41,7 @@ header {
 nav ul {
   list-style: none;
   display: flex;
-  gap: 30px;
+  gap: 20px;
   padding: 0;
   margin: 0;
 }
@@ -56,9 +54,15 @@ nav a {
   transition: color 0.3s;
 }
 
+.btn-book-nav {
+    border: 1px solid var(--primary-color);
+    padding: 8px 15px;
+    color: var(--primary-color) !important;
+}
+
 /* Hero Section */
 .hero {
-  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+  background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
     url("https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1920&q=80");
   background-size: cover;
   height: 600px;
@@ -71,7 +75,7 @@ nav a {
 
 .booking-container {
   width: 100%;
-  max-width: 1200px;
+  /* max-width: 1200px; - Removed as per provided CSS, but keeping it might be better for responsiveness */
   padding: 0 20px;
   display: flex;
   flex-direction: column;
@@ -79,12 +83,13 @@ nav a {
 }
 
 .booking-form {
-  background: rgba(10, 10, 10, 0.9);
+  background: rgba(0, 0, 0, 0.85);
   padding: 30px;
   border: 2px solid var(--primary-color);
   border-radius: 8px;
-  width: 420px;
+  width: 400px;
   max-width: 100%;
+  color: white; /* Text color for dark form */
 }
 
 .booking-container h2 {
@@ -113,14 +118,32 @@ nav a {
   letter-spacing: 0.2px;
 }
 
+/* Labels inside the dark booking form should be white */
+.booking-form .form-group label {
+  color: white;
+}
+
 input,
-select {
+select,
+textarea {
   width: 100%;
   padding: 10px;
   background: #fff;
-  border: none;
+  border: 1px solid #ccc; /* Thêm viền để thanh chọn hiện rõ trên nền sáng */
   border-radius: 4px;
   outline: none;
+  color: #000 !important; /* Đảm bảo chữ luôn màu đen */
+  font-weight: 500;
+}
+
+input:focus, select:focus {
+  border-color: var(--primary-color); /* Hiện rõ hơn khi đang chọn */
+}
+
+/* Đảm bảo chữ trong các tùy chọn (option) của select luôn là màu đen */
+select option {
+  color: #000 !important;
+  background-color: #fff; /* Đảm bảo nền trắng cho các tùy chọn */
 }
 
 .form-row {
@@ -137,7 +160,7 @@ select {
   padding: 12px;
   background: var(--primary-color);
   border: none;
-  color: black;
+  color: black !important;
   font-weight: bold;
   cursor: pointer;
   margin-top: 10px;
@@ -146,16 +169,16 @@ select {
 
 /* Services */
 .services {
-  padding: 80px 20px;
+  padding: 50px;
   text-align: center;
-  background: transparent;
+  background: #f4f4f4; /* Services section should be on the light background */
 }
 
 .services h2 {
   font-size: 32px;
   font-weight: 800;
   margin-bottom: 40px;
-  color: #1a1a1a;
+  color: #333; /* Default text color for light theme */
 }
 
 .grid-container {
@@ -166,12 +189,11 @@ select {
 }
 
 .card {
-  background: #1a1a1a;
+  background: white;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  border: 1px solid #2a2a2a;
-  color: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  color: #333; /* Default text color for light theme */
 }
 
 .grid-container .card img {

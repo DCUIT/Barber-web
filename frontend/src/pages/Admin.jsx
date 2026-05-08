@@ -52,6 +52,10 @@ export default function Admin() {
         const res = await API.get("/bookings", authHeader);
         setBookings(res.data);
       }
+      if (activeTab === TABS.USERS) {
+        const res = await API.get("/auth/users", authHeader); // Giả định endpoint backend
+        setUsers(res.data || []);
+      }
     } catch (err) {
       setError("Lỗi tải dữ liệu");
     } finally {
@@ -70,7 +74,7 @@ export default function Admin() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#0c0c0c]">
+    <div className="flex min-h-screen bg-gray-100 text-gray-800">
       {/* SIDEBAR */}
       <aside className="w-64 bg-black text-white p-6 hidden md:block">
         <div className="text-[#d4a373] font-bold text-xl mb-10 tracking-widest uppercase">Admin Panel</div>
@@ -94,10 +98,10 @@ export default function Admin() {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-8 text-gray-800">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold text-gray-800 capitalize">{activeTab}</h2>
-          <div className="text-gray-500">Xin chào, Admin</div>
+          <div className="text-gray-600">Xin chào, Admin</div>
         </div>
 
         {error && <div className="bg-red-100 text-red-700 p-4 rounded mb-6">{error}</div>}
@@ -107,19 +111,17 @@ export default function Admin() {
         {activeTab === TABS.DASHBOARD && stats && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
-              <div className="text-gray-400 text-sm uppercase font-bold">Total Bookings</div>
+              <div className="text-gray-500 text-sm uppercase font-bold">Total Bookings</div>
               <div className="text-3xl font-bold">{stats.totalBookings}</div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-              <div className="text-gray-400 text-sm uppercase font-bold">Revenue</div>
+              <div className="text-gray-500 text-sm uppercase font-bold">Revenue</div>
               <div className="text-3xl font-bold">{formatPrice(stats.totalRevenue)}</div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-              <div className="text-gray-400 text-sm uppercase font-bold">Users</div>
               <div className="text-3xl font-bold">{stats.totalUsers}</div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
-              <div className="text-gray-400 text-sm uppercase font-bold">Barbers</div>
               <div className="text-3xl font-bold">{stats.totalBarbers}</div>
             </div>
           </div>
@@ -168,6 +170,36 @@ export default function Admin() {
                         <option value="Cancelled">Cancel</option>
                       </select>
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* USERS TABLE */}
+        {activeTab === TABS.USERS && (
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="p-4 font-bold">Username</th>
+                  <th className="p-4 font-bold">Role</th>
+                  <th className="p-4 font-bold">ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u._id} className="border-b hover:bg-gray-50 transition">
+                    <td className="p-4 font-medium">{u.username}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
+                      }`}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="p-4 text-gray-400 text-xs">{u._id}</td>
                   </tr>
                 ))}
               </tbody>

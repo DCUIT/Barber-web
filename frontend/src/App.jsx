@@ -13,7 +13,7 @@ import BarberHistory from "./pages/BarberHistory";
 export default function App() {
   return (
 
-    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-800">
+    <div className="min-h-screen flex flex-col bg-[#f4f4f4] text-[#333]">
       <Navbar />
       <div className="flex-1">
         <Routes>
@@ -29,4 +29,3 @@ export default function App() {
     </div>
   );
 }
-

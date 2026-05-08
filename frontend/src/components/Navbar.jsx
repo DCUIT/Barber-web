@@ -65,21 +65,21 @@ export default function Navbar() {
                   <i className="fas fa-cog text-xl"></i>
                 </Link>
               )}
-              <span className="text-[#d4a373] font-semibold hidden sm:inline">{username}</span>
+              <span className="text-white font-semibold hidden sm:inline">{username}</span>
               <button
                 onClick={handleLogout}
-                className="text-gray-600 hover:text-[#d4a373] transition"
+                className="text-white hover:text-[#d4a373] transition"
                 title="Đăng xuất"
               >
                 <i className="fas fa-sign-out-alt text-xl"></i>
               </button>
             </div>
           ) : (
-            <Link to="/login" className="text-gray-600 hover:text-[#d4a373] transition" title="Đăng nhập">
+            <Link to="/login" className="text-white hover:text-[#d4a373] transition" title="Đăng nhập">
               <i className="fas fa-user text-xl"></i>
             </Link>
           )}
-          <Link to="/booking" className="relative text-gray-600 hover:text-[#d4a373] transition">
+          <Link to="/booking" className="relative text-white hover:text-[#d4a373] transition">
             <i className="fas fa-calendar-check text-xl"></i>
           </Link>
         </div>

@@ -86,7 +86,7 @@ export default function Home() {
         {loading ? (
           <div className="text-center">Đang tải...</div>
         ) : (
-          <div className="grid-container">
+          <div className="grid-container text-black"> {/* Ensure text is black on white cards */}
             {services.slice(0, 3).map((s) => (
               <div key={s._id} className="card">
                 <img 

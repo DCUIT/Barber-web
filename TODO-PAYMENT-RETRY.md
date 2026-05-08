@@ -25,18 +25,18 @@
    - Username: `admin`
    - Password: `123`
 
-### Bước 3: Đặt hàng (tạo đơn mới)
-1. Thêm món vào giỏ hàng
-2. Click **Thanh toán**
-3. Hoàn thành đặt hàng
-4. Đơn hàng sẽ có status = "pending"
+### Bước 3: Đặt lịch (tạo booking mới)
+1. Truy cập trang **Đặt Lịch**
+2. Chọn dịch vụ, Barber và thời gian
+3. Click **Xác nhận đặt lịch**
+4. Booking sẽ có status = "Pending"
 
 ### Bước 4: Test đổi trạng thái
 1. Click **Admin** trong menu
-2. Chuyển sang tab **Đơn hàng**
-3. Tại đơn hàng bạn vừa tạo, dùng **dropdown** để đổi:
-   - → **"Đã thanh toán"** (paid) - Simulate payment success
-   - → **"Hoàn tiền"** (refunded) - Simulate refund
+2. Chuyển sang tab **Bookings**
+3. Tại lịch hẹn bạn vừa tạo, dùng **dropdown** để đổi trạng thái sang:
+   - → **"Accepted"** (Xác nhận lịch)
+   - → **"Cancelled"** (Hủy lịch)
 
 ---
 
