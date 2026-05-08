@@ -18,7 +18,7 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
-      const res = await API.post("/login", { username, password });
+      const res = await API.post("/auth/login", { username, password });
       
       // Kiểm tra dữ liệu trả về từ server trong Console (F12)
       console.log("Dữ liệu đăng nhập:", res.data);
@@ -27,9 +27,11 @@ export default function Login() {
       localStorage.setItem("token", token);
       localStorage.setItem("username", res.data.username || username);
       
+      window.dispatchEvent(new Event("auth-change")); // Thông báo cho Navbar cập nhật
       alert("Đăng nhập thành công!");
       navigate("/");
     } catch (err) {
+      console.error("Chi tiết lỗi đăng nhập:", err);
       if (!err.response) {
         setError("Lỗi kết nối: Hãy đảm bảo Backend đang chạy ở cổng 4000 và MongoDB đã bật.");
       } else {
@@ -46,7 +48,7 @@ export default function Login() {
     setError("");
     setSuccess("");
     try {
-      await API.post("/register", { username, password });
+      await API.post("/auth/register", { username, password });
       setSuccess("Đăng ký thành công! Vui lòng đăng nhập.");
       setIsRegister(false); // Chuyển về form đăng nhập
       setUsername("");

@@ -12,7 +12,14 @@
 ## Step 3: Tách backend hiện tại
 - [ ] Xây Node.js Express API mới (giữ frontend chạy được)
 - [ ] Di chuyển auth (JWT), CRUD services/barbers, booking calendar
-- [ ] Thiết kế DB (MongoDB hoặc MySQL) và migrate schema
+- [x] Thiết kế DB (MongoDB) và migrate schema
+
+## Step 4: Admin Dashboard (New Tasks)
+- [x] Dashboard Overview (Stats Cards)
+- [ ] Quản lý Dịch vụ (CRUD Services)
+- [ ] Quản lý Barber (CRUD Barbers)
+- [ ] Quản lý Booking (Table + Status Update)
+- [ ] Thống kê doanh thu (Recharts)
 
 ## Step 4: Update frontend
 - [ ] React pages: Home -> hiển barber nổi bật + services hot + feedback

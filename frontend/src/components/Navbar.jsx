@@ -1,38 +1,33 @@
-
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import DarkToggle from "./DarkToggle";
 
 // Note: this repo has many lint rules enabled; keep this component pure.
 export default function Navbar() {
-  const [token, setToken] = useState(localStorage.getItem("token"));
-  const [username, setUsername] = useState(localStorage.getItem("username"));
+  const navigate = useNavigate();
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  const [username, setUsername] = useState(() => localStorage.getItem("username"));
+
+  const updateAuth = useCallback(() => {
+    setToken(localStorage.getItem("token"));
+    setUsername(localStorage.getItem("username"));
+  }, []);
 
   useEffect(() => {
-    // Only read initial values once; avoid setState directly inside effect body (lint)
-    queueMicrotask(() => {
-      setToken(localStorage.getItem("token"));
-      setUsername(localStorage.getItem("username"));
-    });
-
-    const handleStorageChange = () => {
-      setToken(localStorage.getItem("token"));
-      setUsername(localStorage.getItem("username"));
-    };
-
-    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("storage", updateAuth);
+    window.addEventListener("auth-change", updateAuth); // Lắng nghe sự kiện tùy chỉnh
 
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("storage", updateAuth);
+      window.removeEventListener("auth-change", updateAuth);
     };
-  }, []);
+  }, [updateAuth]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
-    setToken(null);
-    setUsername(null);
-    window.location.href = "/";
+    updateAuth();
+    navigate("/");
   };
 
   return (
