@@ -1,12 +1,11 @@
 # TODO - Barber Booking Web migration
 
 ## Step 1: Repo khảo sát & mapping
-- [x] Đọc backend/app.py để hiểu API hiện tại (Flask: foods, orders, stats, jwt)
-- [x] Đọc frontend các file chính: App.jsx, api.js, Home.jsx, Cart.jsx, Menu.jsx, Admin.jsx, Login.jsx, Payment.jsx, useCart.js
-- [ ] Xác định toàn bộ các component/page liên quan đến Food/Cart/Order để đổi sang Service/Appointment/Booking
+- [x] Đọc cấu trúc project hiện tại (Auth, Services, Barbers, Bookings)
+- [x] Chuyển đổi toàn bộ UI sang phong cách The Cutting Edge (Gold & Black)
 
 ## Step 2: Thống nhất kiến trúc mục tiêu
-- [ ] Đổi concept: Food Web -> Barber Booking Web
+- [x] Thống nhất concept: Barber Booking Web
 - [ ] Quy ước endpoints Node.js + DB schema tương lai
 - [x] Chọn hướng Java: Spring Boot microservice (notification/analytics/recommendation)
 
@@ -38,5 +37,3 @@
 - [ ] Chat realtime
 - [ ] QR check-in
 - [ ] AI recommendation
-
-

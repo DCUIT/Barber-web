@@ -1,18 +1,13 @@
-# Plan: Admin Test Payment Retry
+# Plan: Admin Manage Bookings
 
-## Status: ✅ DONE
+## Status: 🔄 MIGRATING
 
-### Completed:
-
-1. **Backend (app.py)** - Added API:
-   - `PUT /orders/<id>` - Update order status (admin only)
-   - Accepts: { status: "pending" | "paid" | "cancelled" | "refunded" }
-   - Token valid for 24 hours
-
-2. **Frontend (Admin.jsx)** - Added UI:
-   - Dropdown to change order status
-   - Visual status badges (color-coded)
-   - Show status for each order
+### Tasks:
+1. **Backend** - API Cập nhật trạng thái lịch hẹn:
+   - `PUT /bookings/<id>` - Cập nhật status (Pending, Accepted, Completed, Cancelled)
+2. **Frontend** - Quản lý lịch hẹn:
+   - Hiển thị danh sách khách hàng đặt lịch.
+   - Nút xác nhận hoặc hủy lịch ngay trên dashboard.
 
 ---
 
@@ -20,11 +15,7 @@
 
 ### Bước 1: Khởi động server
 ```bash
-# Terminal 1 - Backend
-cd backend && python app.py
-
-# Terminal 2 - Frontend  
-cd frontend && npm run dev
+# Chạy Backend Node.js và Frontend như hướng dẫn trước đó
 ```
 
 ### Bước 2: Đăng nhập Admin

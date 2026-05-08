@@ -1,8 +1,10 @@
 import { useState } from "react";
 import API from "../api";
+import { useNavigate } from "react-router-dom";
 
 // Trang đăng nhập / đăng ký, có thể chuyển tab, dễ xem lại
 export default function Login() {
+  const navigate = useNavigate();
   const [isRegister, setIsRegister] = useState(false); // false = login, true = register
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -17,12 +19,22 @@ export default function Login() {
     setError("");
     try {
       const res = await API.post("/login", { username, password });
-      localStorage.setItem("token", res.data.access_token);
-      localStorage.setItem("username", res.data.username);
+      
+      // Kiểm tra dữ liệu trả về từ server trong Console (F12)
+      console.log("Dữ liệu đăng nhập:", res.data);
+
+      const token = res.data.access_token || res.data.token;
+      localStorage.setItem("token", token);
+      localStorage.setItem("username", res.data.username || username);
+      
       alert("Đăng nhập thành công!");
-      window.location.href = "/";
+      navigate("/");
     } catch (err) {
-      setError(err.response?.data?.msg || "Sai tài khoản hoặc mật khẩu!");
+      if (!err.response) {
+        setError("Lỗi kết nối: Hãy đảm bảo Backend đang chạy ở cổng 4000 và MongoDB đã bật.");
+      } else {
+        setError(err.response?.data?.msg || "Sai tài khoản hoặc mật khẩu!");
+      }
     }
     setLoading(false);
   };
