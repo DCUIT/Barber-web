@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import API from "../api";
 import { useNavigate } from "react-router-dom";
-
-
-import Skeleton from "../components/Skeleton";
-import Banner from "../components/Banner";
+import "../style.css";
 
 export default function Home() {
   const navigate = useNavigate();
+
   const [services, setServices] = useState([]);
+  const [barbers, setBarbers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,59 +20,88 @@ export default function Home() {
         setServices([]);
         setLoading(false);
       });
+
+    API.get("/barbers")
+      .then((res) => setBarbers(res.data || []))
+      .catch(() => setBarbers([]));
   }, []);
 
   return (
-    <div className="bg-gray-50">
-      <Banner />
+    <div className="home-wrapper">
+      {/* HERO */}
+      <section className="hero">
+        <div className="booking-container">
+          <h2>TRẢI NGHIỆM CẮT TÓC CHUẨN MỰC</h2>
+          <div className="booking-form">
+            <h3>ĐẶT LỊCH HẸN NGAY</h3>
+            <form onSubmit={(e) => { e.preventDefault(); navigate("/booking"); }}>
+              {/* SERVICE */}
+              <div className="form-group">
+                <label>1. CHỌN DỊCH VỤ</label>
+                <select required>
+                  <option value="">Cắt Tóc, Cạo Râu, Gội Đầu...</option>
+                  {services.map((s) => (
+                    <option key={s._id} value={s._id}>
+                      {s.name} - {new Intl.NumberFormat("vi-VN").format(s.price)}đ
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-      <section className="py-10 text-center">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 uppercase tracking-tight">
-          Barber Booking Web
-        </h1>
-        <p className="mt-3 text-gray-600">Chọn dịch vụ • chọn barber • chọn giờ • xác nhận</p>
+              {/* BARBER */}
+              <div className="form-group">
+                <label>2. CHỌN BARBER</label>
+                <select required>
+                  <option value="">Nguyễn Nam, Trần Lâm, Lê Anh...</option>
+                  {barbers.map((b) => (
+                    <option key={b._id} value={b._id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* DATE + TIME */}
+              <div className="form-row">
+                <div className="form-group">
+                  <label>3. CHỌN NGÀY</label>
+                  <input type="date" required />
+                </div>
+                <div className="form-group">
+                  <label>& GIỜ</label>
+                  <input type="time" required />
+                </div>
+              </div>
+
+              {/* BUTTON */}
+              <button type="submit" className="btn-submit">ĐẶT HẸN NGAY!</button>
+            </form>
+          </div>
+        </div>
       </section>
 
-      <main className="container mx-auto px-4 pb-20">
+      {/* SERVICES */}
+      <section className="services">
+        <h2>DỊCH VỤ CỦA CHÚNG TÔI</h2>
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {Array(8)
-              .fill(0)
-              .map((_, i) => (
-                <Skeleton key={i} />
-              ))}
-          </div>
+          <div className="text-center">Đang tải...</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {services.slice(0, 6).map((s) => (
-              <div
-                key={s._id}
-                className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-shadow p-5"
-              >
-                <img
-                  src={s.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600"}
-                  alt={s.name}
-                  className="w-full h-44 object-cover rounded-xl mb-4"
+          <div className="grid-container">
+            {services.slice(0, 3).map((s) => (
+              <div key={s._id} className="card">
+                <img 
+                  src={s.image || "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=500"} 
+                  alt={s.name} 
                 />
-                <h3 className="font-bold text-lg text-gray-900">{s.name}</h3>
-                <div className="text-orange-600 font-bold mt-2">
-                  {typeof s.price === "number" ? `${s.price}đ` : ""}
+                <div className="card-info">
+                  <h4 className="font-bold">{s.name.toUpperCase()}</h4>
+                  <p className="price">{new Intl.NumberFormat("vi-VN").format(s.price)}đ</p>
                 </div>
-                <div className="text-sm text-gray-500 mt-1">
-                  {s.duration ? `${s.duration} phút` : ""}
-                </div>
-                <button
-                  onClick={() => navigate("/booking")}
-                  className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl font-bold"
-                >
-                  Đặt lịch
-                </button>
               </div>
             ))}
           </div>
         )}
-      </main>
+      </section>
     </div>
   );
 }
-

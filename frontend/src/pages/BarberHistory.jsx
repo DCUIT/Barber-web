@@ -2,7 +2,16 @@ import { useEffect, useState } from "react";
 import API from "../api";
 import { useNavigate } from "react-router-dom";
 
-
+const statusMap = {
+  Pending: { bg: "bg-yellow-100", fg: "text-yellow-800", label: "Chờ xác nhận" },
+  Accepted: { bg: "bg-green-100", fg: "text-green-800", label: "Đã xác nhận" },
+  Completed: { bg: "bg-blue-100", fg: "text-blue-800", label: "Hoàn thành" },
+  Cancelled: { bg: "bg-red-100", fg: "text-red-800", label: "Đã hủy" }
+};
+const statusLabel = (s) => {
+  const v = statusMap[s] || { bg: "bg-gray-100", fg: "text-gray-800", label: s };
+  return <span className={`px-2 py-1 rounded text-xs font-semibold ${v.bg} ${v.fg}`}>{v.label}</span>;
+};
 
 export default function BarberHistory() {
   const navigate = useNavigate();
@@ -25,17 +34,6 @@ export default function BarberHistory() {
       .catch((e) => setError(e?.response?.data?.msg || "Không thể tải lịch"))
       .finally(() => setLoading(false));
   }, [navigate, token]);
-
-  const statusLabel = (s) => {
-    const map = {
-      Pending: { bg: "bg-yellow-100", fg: "text-yellow-800", label: "Chờ xác nhận" },
-      Accepted: { bg: "bg-green-100", fg: "text-green-800", label: "Đã xác nhận" },
-      Completed: { bg: "bg-blue-100", fg: "text-blue-800", label: "Hoàn thành" },
-      Cancelled: { bg: "bg-red-100", fg: "text-red-800", label: "Đã hủy" }
-    };
-    const v = map[s] || { bg: "bg-gray-100", fg: "text-gray-800", label: s };
-    return <span className={`px-2 py-1 rounded text-xs font-semibold ${v.bg} ${v.fg}`}>{v.label}</span>;
-  };
 
   if (loading) return <div className="py-12 text-center">Đang tải...</div>;
 
@@ -68,8 +66,9 @@ export default function BarberHistory() {
                 </div>
 
                 <div className="text-sm text-gray-700 space-y-1">
-                  <div><span className="text-gray-500">Service:</span> <span className="font-semibold">{b.serviceId}</span></div>
-                  <div><span className="text-gray-500">Barber:</span> <span className="font-semibold">{b.barberId}</span></div>
+                  {/* Giả sử Backend trả về object đã populate, hãy dùng b.serviceId.name */}
+                  <div><span className="text-gray-500">Dịch vụ:</span> <span className="font-semibold">{b.serviceId?.name || b.serviceId}</span></div>
+                  <div><span className="text-gray-500">Stylist:</span> <span className="font-semibold">{b.barberId?.name || b.barberId}</span></div>
                   {b.note ? <div><span className="text-gray-500">Note:</span> <span className="font-semibold">{b.note}</span></div> : null}
                 </div>
               </div>
@@ -89,4 +88,3 @@ export default function BarberHistory() {
     </div>
   );
 }
-

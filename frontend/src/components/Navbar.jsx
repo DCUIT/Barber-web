@@ -57,14 +57,14 @@ export default function Navbar() {
   };
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="text-2xl font-bold text-green-600 flex items-center gap-2">
-          <i className="fas fa-utensils"></i> Hương Vị Việt
-        </Link>
+    <header className="sticky top-0 z-50">
+      <div className="logo">
+        THE <span>CUTTING EDGE</span> BARBERSHOP
+      </div>
 
-        <nav className="hidden md:flex space-x-6 font-medium text-gray-700">
-          <Link to="/" className="hover:text-green-600 transition">Trang Chủ</Link>
+      <nav className="hidden md:block">
+        <ul className="flex items-center gap-6">
+          <Link to="/" className="hover:text-[#d4a373] transition">Trang Chủ</Link>
           <Link to="/booking" className="hover:text-green-600 transition">Đặt Lịch</Link>
           {token ? (
             <Link to="/my-bookings" className="hover:text-green-600 transition">Lịch của tôi</Link>
@@ -73,10 +73,11 @@ export default function Navbar() {
           )}
           <Link to="/" className="hover:text-green-600 transition">Ưu Đãi</Link>
           <Link to="/" className="hover:text-green-600 transition">Liên Hệ</Link>
+        </ul>
         </nav>
 
         <div className="flex items-center space-x-4">
-          {/* Dark mode toggle */}
+          {/* Giao diện Barber thường dùng tông tối cố định, có thể bỏ DarkToggle nếu muốn */}
           <DarkToggle />
           
           {token ? (
@@ -105,10 +106,9 @@ export default function Navbar() {
             </Link>
           )}
           <Link to="/booking" className="relative text-gray-600 hover:text-green-600 transition">
-            <i className={`fas fa-calendar-check text-xl ${cartBounce ? 'animate-bounce' : ''}`}></i>
+            <i className="fas fa-calendar-check text-xl"></i>
           </Link>
         </div>
-      </div>
     </header>
   );
 }

@@ -3,8 +3,13 @@ import API from "../api";
 import Toast from "../components/Toast";
 
 import { useNavigate } from "react-router-dom";
+import "../style.css";
+
+// NOTE: Đây là layout mô phỏng đúng mẫu HTML bạn cung cấp (The Cutting Edge - Đặt Lịch Hẹn).
+// Logic booking thật vẫn giữ: load services/barbers, lấy slots, submit /bookings.
 
 function formatDateInput(d) {
+
   if (!(d instanceof Date) || isNaN(d)) return "";
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -139,119 +144,70 @@ export default function Booking() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-8 text-center">Đặt lịch cắt tóc</h1>
-
-        <div className="grid lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-2xl shadow p-6">
-            <h2 className="font-bold text-xl mb-4">1) Chọn dịch vụ</h2>
-            <div className="space-y-3">
-              <select
-                className="w-full border rounded-lg px-3 py-2"
-                value={selectedServiceId}
-                onChange={(e) => setSelectedServiceId(e.target.value)}
-              >
-                <option value="">-- Chọn dịch vụ --</option>
-                {services.map((s) => (
-                  <option key={s._id} value={s._id}>
-                    {s.name} {typeof s.price === "number" ? `(${s.price}đ)` : ""}
-                  </option>
-                ))}
-              </select>
-
-              <h2 className="font-bold text-xl mb-1 mt-6">2) Chọn barber</h2>
-              <select
-                className="w-full border rounded-lg px-3 py-2"
-                value={selectedBarberId}
-                onChange={(e) => setSelectedBarberId(e.target.value)}
-              >
-                <option value="">-- Chọn barber --</option>
-                {barbers.map((b) => (
-                  <option key={b._id} value={b._id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-
-              <div className="mt-6">
-                <h2 className="font-bold text-xl mb-2">3) Chọn ngày</h2>
-                <input
-                  type="date"
-                  className="w-full border rounded-lg px-3 py-2"
-                  value={bookingDate}
-                  onChange={(e) => setBookingDate(e.target.value)}
-                />
-              </div>
-
-              <div className="mt-6">
-                <h2 className="font-bold text-xl mb-2">Ghi chú</h2>
-                <textarea
-                  className="w-full border rounded-lg px-3 py-2"
-                  rows={3}
-                  placeholder="Gợi ý kiểu tóc, lưu ý..."
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                />
-              </div>
-            </div>
+    <div className="min-h-screen">
+      {/* Booking Form Area */}
+      <section id="booking" className="booking-container">
+        <div className="booking-card">
+          <div className="step">
+            <h3>1. CHỌN DỊCH VỤ</h3>
+            <select value={selectedServiceId} onChange={(e) => setSelectedServiceId(e.target.value)}>
+              <option value="">Chọn dịch vụ...</option>
+              {services.map((s) => (
+                <option key={s._id} value={s._id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <div className="bg-white rounded-2xl shadow p-6">
-            <h2 className="font-bold text-xl mb-4">4) Chọn giờ</h2>
+          <div className="step">
+            <h3>2. CHỌN STYLIST</h3>
+            <select value={selectedBarberId} onChange={(e) => setSelectedBarberId(e.target.value)}>
+              <option value="">Chọn stylist...</option>
+              {barbers.map((b) => (
+                <option key={b._id} value={b._id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            <div className="mb-4">
-              <div className="text-sm text-gray-500">Trạng thái: {loadingSlots ? "Đang tải" : "Sẵn sàng"}</div>
-              {selectedService && selectedBarberId ? (
-                <div className="text-gray-700 mt-2">
-                  <span className="font-semibold">{selectedService.name}</span> cho <span className="font-semibold">{barbers.find(b => String(b._id)===String(selectedBarberId))?.name || ""}</span>
-                </div>
-              ) : null}
-            </div>
+          <div className="step">
+            <h3>3. CHỌN NGÀY & GIỜ</h3>
+            <input type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} />
 
-            {availableSlots.length === 0 ? (
-              <div className="py-10 text-center text-gray-500">
-                {loadingSlots ? "Đang tạo lịch..." : "Chưa có khung giờ trống"}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {availableSlots.map((t) => (
+            <div className="time-slots">
+              {availableSlots.length === 0 ? (
+                <button className="slot" type="button" disabled>
+                  {loadingSlots ? "Đang tải..." : "Chưa có giờ"}
+                </button>
+              ) : (
+                availableSlots.map((t) => (
                   <button
                     key={t}
+                    type="button"
+                    className={`slot ${selectedTime === t ? "active" : ""}`}
                     onClick={() => setSelectedTime(t)}
-                    className={`px-3 py-3 rounded-xl border font-semibold transition ${
-                      selectedTime === t
-                        ? "bg-red-600 text-white border-red-700"
-                        : "bg-white hover:bg-red-50 border-gray-200 text-gray-800"
-                    }`}
                   >
                     {t}
                   </button>
-                ))}
-              </div>
-            )}
-
-            <div className="mt-6">
-              <button
-                onClick={handleConfirm}
-                disabled={submitting}
-                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold text-lg disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {submitting ? "Đang đặt..." : "Xác nhận đặt lịch"}
-              </button>
+                ))
+              )}
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Confirm button (kept outside template card, but uses same style rule) */}
+      <div style={{ display: "flex", justifyContent: "center", marginTop: "-10px" }}>
+        <button className="btn-confirm" type="button" disabled={submitting} onClick={handleConfirm}>
+          {submitting ? "Đang đặt..." : "XÁC NHẬN ĐẶT LỊCH"}
+        </button>
       </div>
 
       {toast.open && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast({ ...toast, open: false })}
-        />
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast({ ...toast, open: false })} />
       )}
     </div>
   );
 }
-
