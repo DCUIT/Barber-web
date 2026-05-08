@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import API from "../api";
-import Toast from "../components/Toast";
+import toast from "react-hot-toast";
 
 import { useNavigate } from "react-router-dom";
 import "../style.css";
@@ -36,7 +36,8 @@ export default function Booking() {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const [toast, setToast] = useState({ open: false, type: "success", message: "" });
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastBooking, setLastBooking] = useState(null);
 
   useEffect(() => {
     if (!token) {
@@ -117,13 +118,13 @@ export default function Booking() {
 
   async function handleConfirm() {
     if (!selectedServiceId || !selectedBarberId || !bookingDate || !selectedTime) {
-      setToast({ open: true, type: "error", message: "Vui lòng chọn đầy đủ dịch vụ, thợ, ngày và giờ." });
+      toast.error("Vui lòng chọn đầy đủ dịch vụ, thợ, ngày và giờ.");
       return;
     }
 
     setSubmitting(true);
     try {
-      await API.post(
+      const res = await API.post(
         "/bookings",
         {
           barberId: selectedBarberId,
@@ -135,7 +136,9 @@ export default function Booking() {
         authHeader
       );
 
-      setToast({ open: true, type: "success", message: "Đặt lịch thành công!" });
+      toast.success("Đặt lịch thành công!");
+      setLastBooking(res.data);
+      setShowSuccessModal(true);
       setNote("");
       setSelectedTime("");
       // reload slots
@@ -145,7 +148,7 @@ export default function Booking() {
       ).then((res) => setAvailableSlots(res.data?.slots || [])).catch(() => setAvailableSlots([]));
     } catch (e) {
       const msg = e?.response?.data?.msg || "Đặt lịch thất bại";
-      setToast({ open: true, type: "error", message: msg });
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -236,8 +239,40 @@ export default function Booking() {
           </button>
         </div>
       </section>
-      {toast.open && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast({ ...toast, open: false })} />
+
+      {/* Success Modal */}
+      {showSuccessModal && lastBooking && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl animate-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i className="fas fa-check text-3xl"></i>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">ĐẶT LỊCH THÀNH CÔNG!</h2>
+            <p className="text-gray-500 mb-6 text-sm">Cảm ơn bạn đã tin tưởng The Cutting Edge.</p>
+            
+            <div className="bg-gray-50 rounded-xl p-4 text-left space-y-2 mb-6">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Dịch vụ:</span>
+                <span className="font-bold">{selectedService?.name}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Stylist:</span>
+                <span className="font-bold">{barbers.find(b => b._id === selectedBarberId)?.name}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Thời gian:</span>
+                <span className="font-bold text-[#d4a373]">{lastBooking.bookingTime} - {lastBooking.bookingDate}</span>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full btn-submit m-0 py-3"
+            >
+              ĐÓNG
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

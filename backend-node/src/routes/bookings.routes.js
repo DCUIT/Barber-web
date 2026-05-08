@@ -3,6 +3,7 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 import { Booking } from '../models/Booking.js';
 import { Service } from '../models/Service.js';
 import { Barber } from '../models/Barber.js';
+import { User } from '../models/User.js';
 
 function timeToMinutes(t) {
   const [h, m] = t.split(':').map(Number);
@@ -46,14 +47,41 @@ bookingsRouter.get('/calendar', requireAuth, async (req, res) => {
 });
 
 bookingsRouter.get('/', requireAuth, async (req, res) => {
-  const { role } = req.user;
-  if (role === 'admin') {
-    const all = await Booking.find({}).sort({ createdAt: -1 });
-    return res.json(all);
-  }
+  try {
+    const { role } = req.user;
+    const { page = 1, limit = 10, search, barberId, status } = req.query;
 
-  const mine = await Booking.find({ userId: req.user.id }).sort({ createdAt: -1 });
-  res.json(mine);
+    const query = {};
+    if (barberId) query.barberId = barberId;
+    if (status) query.status = status;
+
+    if (role === 'admin') {
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+
+      // Nếu có tìm kiếm theo tên khách hàng
+      if (search) {
+        const users = await User.find({ username: new RegExp(search, 'i') }).select('_id');
+        query.userId = { $in: users.map(u => u._id) };
+      }
+
+      const totalCount = await Booking.countDocuments(query);
+      const bookings = await Booking.find(query)
+        .populate('userId', 'username')
+        .populate('barberId', 'name')
+        .populate('serviceId', 'name price')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+
+      return res.json({ bookings, totalCount });
+    }
+
+    const mine = await Booking.find({ userId: req.user.id }).populate('barberId', 'name').populate('serviceId', 'name price').sort({ createdAt: -1 });
+    res.json(mine);
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+    res.status(500).json({ msg: 'Server error fetching bookings' });
+  }
 });
 
   bookingsRouter.post('/', requireAuth, async (req, res) => {
@@ -63,33 +91,40 @@ bookingsRouter.get('/', requireAuth, async (req, res) => {
     return res.status(400).json({ msg: 'Missing fields' });
   }
 
-  const service = await Service.findById(serviceId);
-  if (!service) return res.status(404).json({ msg: 'Service not found' });
+  try {
+    const service = await Service.findById(serviceId);
+    if (!service) return res.status(404).json({ msg: 'Service not found' });
+    const barber = await Barber.findById(barberId);
+    if (!barber) return res.status(404).json({ msg: 'Barber not found' });
 
-  // Simple overlap rule: block exact start time (keeps logic simple for internship MVP)
-  const conflict = await Booking.findOne({
-    barberId,
-    bookingDate,
-    bookingTime,
-    status: { $in: ['Pending','Accepted'] }
-  });
+    // Simple overlap rule: block exact start time (keeps logic simple for internship MVP)
+    const conflict = await Booking.findOne({
+      barberId,
+      bookingDate,
+      bookingTime,
+      status: { $in: ['Pending','Accepted'] }
+    });
 
-  if (conflict) return res.status(409).json({ msg: 'Time slot already booked' });
+    if (conflict) return res.status(409).json({ msg: 'Time slot already booked' });
 
-  const booking = await Booking.create({
-    userId,
-    barberId,
-    serviceId,
-    bookingDate,
-    bookingTime,
-    note: note || '',
-    status: 'Pending'
-  });
+    const booking = await Booking.create({
+      userId,
+      barberId,
+      serviceId,
+      bookingDate,
+      bookingTime,
+      note: note || '',
+      status: 'Pending'
+    });
 
     // Emit new booking event
     io.emit('newBooking', booking); // Emit to all connected clients
 
-  res.json(booking);
+    res.json(booking);
+  } catch (error) {
+    console.error("Error creating booking:", error);
+    res.status(500).json({ msg: 'Server error creating booking' });
+  }
 });
 
   bookingsRouter.put('/:id/status', requireAuth, requireRole(['admin','barber']), async (req, res) => {
@@ -109,6 +144,16 @@ bookingsRouter.get('/', requireAuth, async (req, res) => {
 
   res.json(booking);
 });
+
+  bookingsRouter.delete('/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+      await Booking.findByIdAndDelete(req.params.id);
+      res.json({ msg: 'Booking deleted' });
+    } catch (error) {
+      console.error("Error deleting booking:", error);
+      res.status(500).json({ msg: 'Server error deleting booking' });
+    }
+  });
 
   return bookingsRouter;
 };

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import DarkToggle from "./DarkToggle";
+import { io } from "socket.io-client";
+import toast from "react-hot-toast";
 
 // Note: this repo has many lint rules enabled; keep this component pure.
 export default function Navbar() {
@@ -8,6 +10,8 @@ export default function Navbar() {
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [username, setUsername] = useState(() => localStorage.getItem("username"));
   const [role, setRole] = useState(() => localStorage.getItem("role"));
+  const [notifications, setNotifications] = useState([]);
+  const [showNotif, setShowNotif] = useState(false);
 
   const updateAuth = useCallback(() => {
     setToken(localStorage.getItem("token"));
@@ -24,6 +28,32 @@ export default function Navbar() {
       window.removeEventListener("auth-change", updateAuth);
     };
   }, [updateAuth]);
+
+  // Realtime Notifications
+  useEffect(() => {
+    const socket = io("http://localhost:4000");
+
+    socket.on("newBooking", (data) => {
+      if (role === "admin" || role === "barber") {
+        const msg = `Có lịch hẹn mới từ ${data.userId?.username || 'khách hàng'}!`;
+        toast.success(msg, { icon: '🔔' });
+        setNotifications(prev => [{ id: Date.now(), title: "Lịch hẹn mới", message: msg, time: "Vừa xong" }, ...prev]);
+      }
+    });
+
+    socket.on("bookingUpdated", (data) => {
+      // Nếu user là chủ nhân của booking này
+      if (role === "user") {
+        const msg = `Lịch hẹn của bạn đã được cập nhật thành: ${data.status}`;
+        toast.success(msg);
+        setNotifications(prev => [{ id: Date.now(), title: "Cập nhật lịch hẹn", message: msg, time: "Vừa xong" }, ...prev]);
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [role]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -91,9 +121,44 @@ export default function Navbar() {
               <i className="fas fa-user text-xl"></i>
             </Link>
           )}
-          <Link to="/booking" className="relative text-white hover:text-[#d4a373] transition">
-            <i className="fas fa-calendar-check text-xl"></i>
-          </Link>
+
+          {/* Notification Bell */}
+          <div className="relative">
+            <button 
+              onClick={() => setShowNotif(!showNotif)}
+              className="relative text-white hover:text-[#d4a373] transition"
+            >
+              <i className="fas fa-bell text-xl"></i>
+              {notifications.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                  {notifications.length}
+                </span>
+              )}
+            </button>
+
+            {/* Dropdown */}
+            {showNotif && (
+              <div className="absolute right-0 mt-4 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden text-gray-800">
+                <div className="p-3 border-b font-bold text-sm bg-gray-50 flex justify-between">
+                  Thông báo
+                  <button onClick={() => setNotifications([])} className="text-xs text-blue-600 font-normal">Xóa hết</button>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="p-8 text-center text-gray-400 text-sm">Không có thông báo mới</div>
+                  ) : (
+                    notifications.map(n => (
+                      <div key={n.id} className="p-3 border-b hover:bg-gray-50 transition cursor-pointer">
+                        <p className="font-bold text-xs">{n.title}</p>
+                        <p className="text-xs text-gray-600">{n.message}</p>
+                        <p className="text-[10px] text-gray-400 mt-1">{n.time}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
     </header>
   );

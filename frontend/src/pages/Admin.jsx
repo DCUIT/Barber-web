@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import API from "../api";
 import { formatCurrency as formatPrice } from "../utils/formatPrice"; // Giả sử hàm này vẫn dùng được cho VNĐ
 import { io } from "socket.io-client"; // Import socket.io-client
+import toast from "react-hot-toast";
 
 const TABS = { DASHBOARD: "dashboard", SERVICES: "services", BARBERS: "barbers", BOOKINGS: "bookings", USERS: "users" };
 
@@ -51,9 +52,10 @@ export default function Admin() {
         const barbersRes = await API.get("/barbers");
         const usersRes = await API.get("/auth/users", authHeader);
 
+        const allBookings = res.data.bookings || res.data; // Hỗ trợ cả 2 cấu trúc
         setStats({
-          totalBookings: res.data.length,
-          totalRevenue: res.data.reduce((acc, curr) => acc + (curr.serviceId?.price || 0), 0),
+          totalBookings: res.data.totalCount || allBookings.length,
+          totalRevenue: Array.isArray(allBookings) ? allBookings.reduce((acc, curr) => acc + (curr.serviceId?.price || 0), 0) : 0,
           totalBarbers: barbersRes.data.length,
           totalUsers: usersRes.data.length
         });
@@ -104,7 +106,7 @@ export default function Admin() {
     });
 
     socket.on('newBooking', (newBooking) => {
-      console.log('New booking received:', newBooking);
+      toast.success(`Khách ${newBooking.userId?.username || 'mới'} vừa đặt lịch!`, { duration: 5000 });
       if (activeTab === TABS.BOOKINGS) {
         fetchData(); // Refetch data to include new booking
       }
@@ -126,7 +128,7 @@ export default function Admin() {
 
   const updateBookingStatus = async (id, status) => {
     try {
-      await API.put(`/bookings/${id}`, { status }, authHeader);
+      await API.put(`/bookings/${id}/status`, { status }, authHeader);
       setSuccess("Cập nhật trạng thái thành công");
       fetchData();
     } catch (err) {
@@ -169,6 +171,7 @@ export default function Admin() {
   // Logic CRUD Dịch vụ
   const handleServiceSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const data = { ...serviceForm, price: Number(serviceForm.price), durationMinutes: Number(serviceForm.durationMinutes) };
       if (editingId) {
@@ -183,8 +186,9 @@ export default function Admin() {
       setServiceForm({ name: "", price: "", durationMinutes: "", image: "", description: "" });
       setEditingId(null);
       fetchData();
-    } catch (err) { setError("Lỗi xử lý dịch vụ"); }
-    setLoading(false);
+    } catch (err) { 
+      setError("Lỗi xử lý dịch vụ"); 
+    } finally { setLoading(false); }
   };
 
   const deleteService = async (id) => {
@@ -195,7 +199,6 @@ export default function Admin() {
       fetchData();
     } catch (err) { setError("Xóa thất bại"); }
   };
-  
   // Hàm xử lý upload ảnh lên Cloudinary
   const handleImageUpload = async (file, type) => {
     if (!file) return;
@@ -217,14 +220,14 @@ export default function Admin() {
   // Logic CRUD Barber
   const handleBarberSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const data = { ...barberForm, experienceYears: Number(barberForm.experienceYears) };
       if (editingId) {
         await API.put(`/barbers/${editingId}`, data, authHeader);
         setSuccess("Cập nhật Barber thành công");
       } else {
-        const avatarUrl = barberForm.avatar; // Giả sử đã có URL từ upload hoặc nhập tay
-        await API.post("/barbers", { ...data, avatar: avatarUrl }, authHeader);
+        await API.post("/barbers", { ...data, avatar: barberForm.avatar }, authHeader);
         setSuccess("Thêm Barber thành công");
       }
       // Reset form và editingId sau khi submit
@@ -232,6 +235,7 @@ export default function Admin() {
       setEditingId(null);
       fetchData();
     } catch (err) { setError("Lỗi xử lý Barber"); }
+    finally { setLoading(false); }
   };
 
   const deleteBarber = async (id) => {
@@ -289,9 +293,11 @@ export default function Admin() {
               <div className="text-3xl font-bold">{formatPrice(stats.totalRevenue)}</div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+              <div className="text-gray-500 text-sm uppercase font-bold">Total Users</div>
               <div className="text-3xl font-bold">{stats.totalUsers}</div>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
+              <div className="text-gray-500 text-sm uppercase font-bold">Total Barbers</div>
               <div className="text-3xl font-bold">{stats.totalBarbers}</div>
             </div>
           </div>
@@ -353,7 +359,7 @@ export default function Admin() {
                 </tr>
               </thead>
               <tbody>
-                {bookings.map((b) => (
+                {(bookings || []).map((b) => (
                   <tr key={b._id} className="border-b hover:bg-gray-50 transition">
                     <td className="p-4">{b.userId?.username || "Guest"}</td>
                     <td className="p-4">{b.serviceId?.name}</td>

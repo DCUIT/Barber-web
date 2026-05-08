@@ -5,7 +5,7 @@ import { authRouter } from './routes/auth.routes.js';
 import { servicesRouter } from './routes/services.routes.js';
 import { uploadRouter } from './routes/upload.routes.js';
 import { barbersRouter } from './routes/barbers.routes.js';
-import { bookingsRouter } from './routes/bookings.routes.js';
+import { createBookingsRouter as bookingsRouter } from './routes/bookings.routes.js';
 import { seedDatabase } from './routes/seed.js';
 import { createServer } from 'http'; // Import http server
 import { Server } from 'socket.io'; // Import Socket.io Server

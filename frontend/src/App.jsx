@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import { Toaster } from "react-hot-toast";
 
 import Home from "./pages/Home";
 import Booking from "./pages/Booking";
@@ -12,6 +13,8 @@ import BarberHistory from "./pages/BarberHistory";
 
 export default function App() {
   return (
+    <>
+      <Toaster position="top-right" reverseOrder={false} />
 
     <div className="min-h-screen flex flex-col bg-[#f4f4f4] text-[#333]">
       <Navbar />
@@ -27,5 +30,6 @@ export default function App() {
       </div>
       <Footer />
     </div>
+    </>
   );
 }
