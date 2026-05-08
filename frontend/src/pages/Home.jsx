@@ -1,4 +1,22 @@
 import { useEffect, useState } from "react";
+
+function renderStars(rating) {
+  const v = Number(rating || 0);
+  const full = Math.floor(v);
+  const half = v - full >= 0.5;
+  const empty = 5 - full - (half ? 1 : 0);
+  return (
+    <span className="inline-flex items-center gap-1">
+      {Array.from({ length: full }).map((_, i) => (
+        <span key={`f${i}`} style={{ color: "#d4a373" }}>★</span>
+      ))}
+      {half && <span style={{ color: "#d4a373" }}>☆</span>}
+      {Array.from({ length: empty }).map((_, i) => (
+        <span key={`e${i}`} style={{ color: "#cfcfcf" }}>★</span>
+      ))}
+    </span>
+  );
+}
 import API from "../api";
 import { useNavigate } from "react-router-dom";
 import "../style.css";
@@ -78,6 +96,30 @@ export default function Home() {
             </form>
           </div>
         </div>
+      </section>
+
+      {/* BARBERS (Rating đơn giản) */}
+      <section className="services" style={{ marginTop: 24 }}>
+        <h2>BARBER ĐƯỢC ĐÁNH GIÁ</h2>
+        {loading ? (
+          <div className="text-center">Đang tải...</div>
+        ) : (
+          <div className="grid-container text-black">
+            {barbers.slice(0, 3).map((b) => (
+              <div key={b._id} className="card">
+                <img
+                  src={b.avatar || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=500"}
+                  alt={b.name}
+                />
+                <div className="card-info">
+                  <h4 className="font-bold">{b.name.toUpperCase()}</h4>
+                  <p className="price">{b.specialty || "Barber"}</p>
+                  <p className="duration">{renderStars(b.rating)} ({b.rating?.toFixed ? b.rating.toFixed(1) : b.rating})</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* SERVICES */}
