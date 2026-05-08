@@ -26,6 +26,10 @@ export default function Admin() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBarberId, setFilterBarberId] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  // States cho Pagination Bookings
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // Số lượng mục trên mỗi trang
+  const [totalBookingsCount, setTotalBookingsCount] = useState(0);
 
   const token = localStorage.getItem("token");
   const authHeader = { headers: { Authorization: `Bearer ${token}` } };
@@ -58,13 +62,15 @@ export default function Admin() {
         setBarbers(res.data);
       }
       if (activeTab === TABS.BOOKINGS) {
-        let url = "/bookings?";
+        let url = `/bookings?page=${currentPage}&limit=${itemsPerPage}&`;
         if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}&`;
         if (filterBarberId) url += `barberId=${encodeURIComponent(filterBarberId)}&`;
         if (filterStatus) url += `status=${encodeURIComponent(filterStatus)}&`;
         
         const res = await API.get(url, authHeader);
-        setBookings(res.data);
+        setBookings(res.data.bookings); // Giả định backend trả về { bookings: [], totalCount: X }
+        setTotalBookingsCount(res.data.totalCount);
+
         // Đảm bảo barbers đã được load để dùng cho filter
         const barbersRes = await API.get("/barbers");
         setBarbers(barbersRes.data || []);
@@ -345,6 +351,26 @@ export default function Admin() {
               </tbody>
             </table>
           </div>
+          {/* Pagination Controls */}
+          {totalBookingsCount > itemsPerPage && (
+            <div className="flex justify-center items-center gap-4 p-4 border-t">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="bg-gray-200 hover:bg-gray-300 p-2 rounded disabled:opacity-50"
+              >
+                Trước
+              </button>
+              <span className="font-semibold">Trang {currentPage} / {Math.ceil(totalBookingsCount / itemsPerPage)}</span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(totalBookingsCount / itemsPerPage)))}
+                disabled={currentPage === Math.ceil(totalBookingsCount / itemsPerPage)}
+                className="bg-gray-200 hover:bg-gray-300 p-2 rounded disabled:opacity-50"
+              >
+                Sau
+              </button>
+            </div>
+          )}
           </div>
         )}
 

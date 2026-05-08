@@ -37,6 +37,7 @@
 - [ ] CRUD + responsive
 - [x] Upload ảnh (services/barbers)
 - [x] Search/filter (bookings)
+- [x] Pagination (bookings)
 - [ ] Realtime booking (websocket/polling)
 - [ ] Deploy
 
