@@ -35,7 +35,7 @@
 ## Step 6: Feature bắt buộc cho intern
 - [ ] Login/Register + role user/barber/admin
 - [ ] CRUD + responsive
-- [ ] Upload ảnh (services/barbers)
+- [x] Upload ảnh (services/barbers)
 - [ ] Realtime booking (websocket/polling)
 - [ ] Deploy
 

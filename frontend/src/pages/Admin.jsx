@@ -15,6 +15,7 @@ export default function Admin() {
   // Form states cho Dịch vụ & Barber
   const [serviceForm, setServiceForm] = useState({ name: "", price: "", durationMinutes: "", image: "", description: "" });
   const [barberForm, setBarberForm] = useState({ name: "", specialty: "", experienceYears: "", avatar: "" });
+  const [uploadingImage, setUploadingImage] = useState(false); // State để quản lý trạng thái upload ảnh
   
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -114,9 +115,11 @@ export default function Admin() {
         await API.put(`/services/${editingId}`, data, authHeader);
         setSuccess("Cập nhật dịch vụ thành công");
       } else {
-        await API.post("/services", data, authHeader);
+        const imageUrl = serviceForm.image; // Giả sử đã có URL từ upload hoặc nhập tay
+        await API.post("/services", { ...data, image: imageUrl }, authHeader);
         setSuccess("Thêm dịch vụ thành công");
       }
+      // Reset form và editingId sau khi submit
       setServiceForm({ name: "", price: "", durationMinutes: "", image: "", description: "" });
       setEditingId(null);
       fetchData();
@@ -132,6 +135,24 @@ export default function Admin() {
     } catch (err) { setError("Xóa thất bại"); }
   };
 
+  // Hàm xử lý upload ảnh lên Cloudinary
+  const handleImageUpload = async (file, type) => {
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await API.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` },
+      });
+      setSuccess("Upload ảnh thành công!");
+      return res.data.imageUrl;
+    } catch (err) {
+      setError("Upload ảnh thất bại!");
+      return null;
+    } finally { setUploadingImage(false); }
+  };
+
   // Logic CRUD Barber
   const handleBarberSubmit = async (e) => {
     e.preventDefault();
@@ -141,9 +162,11 @@ export default function Admin() {
         await API.put(`/barbers/${editingId}`, data, authHeader);
         setSuccess("Cập nhật Barber thành công");
       } else {
-        await API.post("/barbers", data, authHeader);
+        const avatarUrl = barberForm.avatar; // Giả sử đã có URL từ upload hoặc nhập tay
+        await API.post("/barbers", { ...data, avatar: avatarUrl }, authHeader);
         setSuccess("Thêm Barber thành công");
       }
+      // Reset form và editingId sau khi submit
       setBarberForm({ name: "", specialty: "", experienceYears: "", avatar: "" });
       setEditingId(null);
       fetchData();
@@ -320,7 +343,15 @@ export default function Admin() {
                 <input placeholder="Tên dịch vụ" className="w-full border p-2 rounded" value={serviceForm.name} onChange={e => setServiceForm({...serviceForm, name: e.target.value})} required />
                 <input placeholder="Giá (VNĐ)" type="number" className="w-full border p-2 rounded" value={serviceForm.price} onChange={e => setServiceForm({...serviceForm, price: e.target.value})} required />
                 <input placeholder="Thời gian (phút)" type="number" className="w-full border p-2 rounded" value={serviceForm.durationMinutes} onChange={e => setServiceForm({...serviceForm, durationMinutes: e.target.value})} required />
-                <input placeholder="Link ảnh" className="w-full border p-2 rounded" value={serviceForm.image} onChange={e => setServiceForm({...serviceForm, image: e.target.value})} />
+                <div className="flex items-center gap-2">
+                  <input type="file" accept="image/*" className="flex-1 border p-2 rounded" onChange={async (e) => {
+                    const imageUrl = await handleImageUpload(e.target.files[0], 'service');
+                    if (imageUrl) setServiceForm({...serviceForm, image: imageUrl});
+                  }} disabled={uploadingImage} />
+                  {uploadingImage && <i className="fas fa-spinner fa-spin text-gray-500"></i>}
+                </div>
+                {serviceForm.image && <img src={serviceForm.image} alt="Preview" className="w-24 h-24 object-cover rounded mt-2" />}
+                <input placeholder="Hoặc dán Link ảnh trực tiếp" className="w-full border p-2 rounded" value={serviceForm.image} onChange={e => setServiceForm({...serviceForm, image: e.target.value})} />
                 <textarea placeholder="Mô tả" className="w-full border p-2 rounded" value={serviceForm.description} onChange={e => setServiceForm({...serviceForm, description: e.target.value})} />
                 <div className="flex gap-2">
                   <button type="submit" className="flex-1 bg-black text-white p-2 rounded font-bold">Lưu</button>
@@ -365,7 +396,15 @@ export default function Admin() {
                 <input placeholder="Tên Stylist" className="w-full border p-2 rounded" value={barberForm.name} onChange={e => setBarberForm({...barberForm, name: e.target.value})} required />
                 <input placeholder="Chuyên môn (ví dụ: Fade & Undercut)" className="w-full border p-2 rounded" value={barberForm.specialty} onChange={e => setBarberForm({...barberForm, specialty: e.target.value})} required />
                 <input placeholder="Kinh nghiệm (năm)" type="number" className="w-full border p-2 rounded" value={barberForm.experienceYears} onChange={e => setBarberForm({...barberForm, experienceYears: e.target.value})} required />
-                <input placeholder="Link Avatar" className="w-full border p-2 rounded" value={barberForm.avatar} onChange={e => setBarberForm({...barberForm, avatar: e.target.value})} />
+                <div className="flex items-center gap-2">
+                  <input type="file" accept="image/*" className="flex-1 border p-2 rounded" onChange={async (e) => {
+                    const avatarUrl = await handleImageUpload(e.target.files[0], 'barber');
+                    if (avatarUrl) setBarberForm({...barberForm, avatar: avatarUrl});
+                  }} disabled={uploadingImage} />
+                  {uploadingImage && <i className="fas fa-spinner fa-spin text-gray-500"></i>}
+                </div>
+                {barberForm.avatar && <img src={barberForm.avatar} alt="Preview" className="w-24 h-24 object-cover rounded-full mt-2" />}
+                <input placeholder="Hoặc dán Link Avatar trực tiếp" className="w-full border p-2 rounded" value={barberForm.avatar} onChange={e => setBarberForm({...barberForm, avatar: e.target.value})} />
                 <div className="flex gap-2">
                   <button type="submit" className="flex-1 bg-black text-white p-2 rounded font-bold">Lưu</button>
                   {editingId && <button type="button" onClick={() => {setEditingId(null); setBarberForm({name:"",specialty:"",experienceYears:"",avatar:""})}} className="bg-gray-200 p-2 rounded">Hủy</button>}
