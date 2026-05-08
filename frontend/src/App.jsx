@@ -3,12 +3,11 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
 import Home from "./pages/Home";
-import Menu from "./pages/Menu";
+import Booking from "./pages/Booking";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import Success from "./pages/Success";
 
-import BookingPro from "./pages/BookingPro";
 import BarberHistory from "./pages/BarberHistory";
 
 export default function App() {
@@ -19,10 +18,8 @@ export default function App() {
       <div className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/my-orders" element={<Menu />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/booking" element={<BookingPro />} />
-
+          <Route path="/booking" element={<Booking />} />
           <Route path="/my-bookings" element={<BarberHistory />} />
           <Route path="/success" element={<Success />} />
           <Route path="/admin" element={<Admin />} />
