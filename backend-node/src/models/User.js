@@ -9,7 +9,9 @@ const UserSchema = new mongoose.Schema(
       required: true,
       enum: ['user', 'barber', 'admin'],
       default: 'user'
-    }
+    },
+    avatar: { type: String, default: '' },
+    phone: { type: String, default: '' },
   },
   { timestamps: true }
 );

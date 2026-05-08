@@ -61,6 +61,53 @@ authRouter.delete('/users/:id', requireAuth, requireRole(['admin']), async (req,
   res.json({ msg: 'User deleted' });
 });
 
+authRouter.get('/me', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ msg: 'User not found' });
+    return res.json({ username: user.username, avatar: user.avatar || '', phone: user.phone || '', role: user.role });
+  } catch (e) {
+    return res.status(500).json({ msg: 'Server error' });
+  }
+});
+
+authRouter.put('/me', requireAuth, async (req, res) => {
+  const { avatar, phone } = req.body || {};
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ msg: 'User not found' });
+
+    user.avatar = typeof avatar === 'string' ? avatar : user.avatar;
+    user.phone = typeof phone === 'string' ? phone : user.phone;
+    await user.save();
+
+    return res.json({ msg: 'Profile updated', user: { username: user.username, avatar: user.avatar || '', phone: user.phone || '' } });
+  } catch (e) {
+    return res.status(500).json({ msg: 'Server error' });
+  }
+});
+
+authRouter.put('/change-password', requireAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (!currentPassword || !newPassword) return res.status(400).json({ msg: 'Missing fields' });
+
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ msg: 'User not found' });
+
+    const ok = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!ok) return res.status(401).json({ msg: 'Current password is incorrect' });
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    user.passwordHash = passwordHash;
+    await user.save();
+
+    return res.json({ msg: 'Password changed' });
+  } catch (e) {
+    return res.status(500).json({ msg: 'Server error' });
+  }
+});
+
 // Seed helper: create admin quickly (admin-only)
 authRouter.post('/seed-admin', requireAuth, requireRole(['admin']), async (req, res) => {
   const { username = 'admin', password = '123' } = req.body || {};
