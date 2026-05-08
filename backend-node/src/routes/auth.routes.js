@@ -38,6 +38,29 @@ authRouter.post('/login', async (req, res) => {
   return res.json({ access_token: token, username: user.username, role: user.role });
 });
 
+// Get all users (Admin only)
+authRouter.get('/users', requireAuth, requireRole(['admin']), async (req, res) => {
+  try {
+    const users = await User.find({}, '-passwordHash');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server error' });
+  }
+});
+
+// Update user role (Admin only)
+authRouter.put('/users/:id/role', requireAuth, requireRole(['admin']), async (req, res) => {
+  const { role } = req.body;
+  await User.findByIdAndUpdate(req.params.id, { role });
+  res.json({ msg: 'Role updated' });
+});
+
+// Delete user (Admin only)
+authRouter.delete('/users/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+  await User.findByIdAndDelete(req.params.id);
+  res.json({ msg: 'User deleted' });
+});
+
 // Seed helper: create admin quickly (admin-only)
 authRouter.post('/seed-admin', requireAuth, requireRole(['admin']), async (req, res) => {
   const { username = 'admin', password = '123' } = req.body || {};
@@ -47,4 +70,3 @@ authRouter.post('/seed-admin', requireAuth, requireRole(['admin']), async (req, 
   const admin = await User.create({ username, passwordHash, role: 'admin' });
   res.json({ msg: 'Seeded', id: admin._id });
 });
-

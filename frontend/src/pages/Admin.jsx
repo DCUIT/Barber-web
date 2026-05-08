@@ -73,6 +73,38 @@ export default function Admin() {
     }
   };
 
+  const deleteBooking = async (id) => {
+    if (!window.confirm("Bạn có chắc muốn xóa lịch hẹn này?")) return;
+    try {
+      await API.delete(`/bookings/${id}`, authHeader);
+      setSuccess("Đã xóa lịch hẹn");
+      fetchData();
+    } catch (err) {
+      setError("Xóa lịch hẹn thất bại");
+    }
+  };
+
+  const deleteUser = async (id) => {
+    if (!window.confirm("Xóa người dùng này sẽ không thể hoàn tác. Tiếp tục?")) return;
+    try {
+      await API.delete(`/auth/users/${id}`, authHeader);
+      setSuccess("Đã xóa người dùng");
+      fetchData();
+    } catch (err) {
+      setError("Xóa người dùng thất bại");
+    }
+  };
+
+  const updateUserRole = async (id, newRole) => {
+    try {
+      await API.put(`/auth/users/${id}/role`, { role: newRole }, authHeader);
+      setSuccess("Đã cập nhật quyền hạn");
+      fetchData();
+    } catch (err) {
+      setError("Cập nhật quyền thất bại");
+    }
+  };
+
   // Logic CRUD Dịch vụ
   const handleServiceSubmit = async (e) => {
     e.preventDefault();
@@ -192,7 +224,7 @@ export default function Admin() {
                   <th className="p-4 font-bold">Stylist</th>
                   <th className="p-4 font-bold">Ngày & Giờ</th>
                   <th className="p-4 font-bold">Trạng thái</th>
-                  <th className="p-4 font-bold">Hành động</th>
+                  <th className="p-4 font-bold text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -212,7 +244,7 @@ export default function Admin() {
                         {b.status}
                       </span>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 text-right flex items-center justify-end gap-3">
                       <select 
                         className="border rounded p-1 text-sm"
                         value={b.status}
@@ -223,6 +255,9 @@ export default function Admin() {
                         <option value="Completed">Complete</option>
                         <option value="Cancelled">Cancel</option>
                       </select>
+                      <button onClick={() => deleteBooking(b._id)} className="text-red-500 hover:text-red-700">
+                        <i className="fas fa-trash"></i>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -239,6 +274,7 @@ export default function Admin() {
                 <tr>
                   <th className="p-4 font-bold">Username</th>
                   <th className="p-4 font-bold">Role</th>
+                  <th className="p-4 font-bold">Hành động</th>
                   <th className="p-4 font-bold">ID</th>
                 </tr>
               </thead>
@@ -252,6 +288,20 @@ export default function Admin() {
                       }`}>
                         {u.role}
                       </span>
+                    </td>
+                    <td className="p-4 flex gap-2">
+                      <select 
+                        className="text-xs border rounded p-1"
+                        value={u.role}
+                        onChange={(e) => updateUserRole(u._id, e.target.value)}
+                      >
+                        <option value="user">User</option>
+                        <option value="barber">Barber</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                      <button onClick={() => deleteUser(u._id)} className="text-red-500 hover:text-red-700">
+                        <i className="fas fa-user-slash"></i>
+                      </button>
                     </td>
                     <td className="p-4 text-gray-400 text-xs">{u._id}</td>
                   </tr>

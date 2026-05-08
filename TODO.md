@@ -16,9 +16,10 @@
 
 ## Step 4: Admin Dashboard (New Tasks)
 - [x] Dashboard Overview (Stats Cards)
-- [x] Quản lý Dịch vụ (CRUD Services)
-- [x] Quản lý Barber (CRUD Barbers)
-- [x] Quản lý Booking (Table + Status Update)
+- [x] CRUD Dịch vụ (Services)
+- [x] CRUD Barber (Stylists)
+- [x] CRUD Booking (Quản lý trạng thái & Xóa)
+- [x] CRUD Users (Xem & Quản lý quyền hạn)
 - [ ] Thống kê doanh thu (Recharts)
 
 ## Step 4: Update frontend
