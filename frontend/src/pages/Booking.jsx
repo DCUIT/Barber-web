@@ -19,7 +19,7 @@ function formatDateInput(d) {
 
 export default function Booking() {
   const navigate = useNavigate();
-  const [token] = useState(() => localStorage.getItem("token"));
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
 
   const [services, setServices] = useState([]);
   const [barbers, setBarbers] = useState([]);
@@ -43,15 +43,31 @@ export default function Booking() {
       navigate("/login");
       return;
     }
+    
+    const fetchInitialData = async () => {
+      try {
+        const [servicesRes, barbersRes] = await Promise.all([
+          API.get("/services"),
+          API.get("/barbers")
+        ]);
+        setServices(servicesRes.data || []);
+        setBarbers(barbersRes.data || []);
+      } catch (error) {
+        console.error("Error fetching initial booking data:", error);
+        setServices([]);
+        setBarbers([]);
+      }
+    };
+    fetchInitialData();
 
-    API.get("/services")
-      .then((res) => setServices(res.data || []))
-      .catch(() => setServices([]));
-
-    API.get("/barbers")
-      .then((res) => setBarbers(res.data || []))
-      .catch(() => setBarbers([]));
-  }, [navigate, token]);
+    const handleAuthChange = () => {
+      const newToken = localStorage.getItem("token");
+      setToken(newToken);
+      if (!newToken) navigate("/login");
+    };
+    window.addEventListener("auth-change", handleAuthChange);
+    return () => window.removeEventListener("auth-change", handleAuthChange);
+  }, [navigate, token]); // token is now a dependency because setToken can change it
 
   const authHeader = useMemo(
     () => ({ headers: { Authorization: `Bearer ${token}` } }),

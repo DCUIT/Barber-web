@@ -39,11 +39,14 @@ export default function Admin() {
     try {
       if (activeTab === TABS.DASHBOARD) {
         const res = await API.get("/bookings", authHeader); // Lấy booking để tính stats tạm thời
+        const barbersRes = await API.get("/barbers");
+        const usersRes = await API.get("/auth/users", authHeader);
+
         setStats({
           totalBookings: res.data.length,
           totalRevenue: res.data.reduce((acc, curr) => acc + (curr.serviceId?.price || 0), 0),
-          totalBarbers: 6, // Hardcoded tạm thời hoặc fetch /barbers
-          totalUsers: 15
+          totalBarbers: barbersRes.data.length,
+          totalUsers: usersRes.data.length
         });
       }
       if (activeTab === TABS.SERVICES) {
@@ -71,7 +74,7 @@ export default function Admin() {
         setUsers(res.data || []);
       }
     } catch (err) {
-      setError("Lỗi tải dữ liệu");
+      setError(err.response?.data?.msg || "Lỗi tải dữ liệu");
     } finally {
       setLoading(false);
     }
@@ -137,6 +140,7 @@ export default function Admin() {
       setEditingId(null);
       fetchData();
     } catch (err) { setError("Lỗi xử lý dịch vụ"); }
+    setLoading(false);
   };
 
   const deleteService = async (id) => {
@@ -147,7 +151,7 @@ export default function Admin() {
       fetchData();
     } catch (err) { setError("Xóa thất bại"); }
   };
-
+  
   // Hàm xử lý upload ảnh lên Cloudinary
   const handleImageUpload = async (file, type) => {
     if (!file) return;
@@ -340,6 +344,7 @@ export default function Admin() {
                 ))}
               </tbody>
             </table>
+          </div>
           </div>
         )}
 

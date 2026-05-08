@@ -66,13 +66,13 @@ export default function Login() {
         {/* Tab chuyển đổi Đăng nhập / Đăng ký */}
         <div className="flex mb-6 border-b">
           <button
-            className={`flex-1 pb-2 text-center font-semibold ${!isRegister ? "border-b-2 border-yellow-400 text-yellow-400" : "text-gray-500"}`}
+            className={`flex-1 pb-2 text-center font-semibold ${!isRegister ? "border-b-2 border-yellow-400 text-gray-800" : "text-gray-500"}`}
             onClick={() => { setIsRegister(false); setError(""); setSuccess(""); }}
           >
             Đăng nhập
           </button>
           <button
-            className={`flex-1 pb-2 text-center font-semibold ${isRegister ? "border-b-2 border-yellow-400 text-yellow-400" : "text-gray-500"}`}
+            className={`flex-1 pb-2 text-center font-semibold ${isRegister ? "border-b-2 border-yellow-400 text-gray-800" : "text-gray-500"}`}
             onClick={() => { setIsRegister(true); setError(""); setSuccess(""); }}
           >
             Đăng ký
