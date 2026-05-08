@@ -13,8 +13,8 @@ export default function Admin() {
   const [stats, setStats] = useState(null);
 
   // Form states cho Dịch vụ & Barber
-  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration: "", image: "", description: "" });
-  const [barberForm, setBarberForm] = useState({ name: "", specialty: "", experience: "" });
+  const [serviceForm, setServiceForm] = useState({ name: "", price: "", durationMinutes: "", image: "", description: "" });
+  const [barberForm, setBarberForm] = useState({ name: "", specialty: "", experienceYears: "", avatar: "" });
   
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -71,6 +71,60 @@ export default function Admin() {
     } catch (err) {
       setError("Cập nhật thất bại");
     }
+  };
+
+  // Logic CRUD Dịch vụ
+  const handleServiceSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const data = { ...serviceForm, price: Number(serviceForm.price), durationMinutes: Number(serviceForm.durationMinutes) };
+      if (editingId) {
+        await API.put(`/services/${editingId}`, data, authHeader);
+        setSuccess("Cập nhật dịch vụ thành công");
+      } else {
+        await API.post("/services", data, authHeader);
+        setSuccess("Thêm dịch vụ thành công");
+      }
+      setServiceForm({ name: "", price: "", durationMinutes: "", image: "", description: "" });
+      setEditingId(null);
+      fetchData();
+    } catch (err) { setError("Lỗi xử lý dịch vụ"); }
+  };
+
+  const deleteService = async (id) => {
+    if (!window.confirm("Xóa dịch vụ này?")) return;
+    try {
+      await API.delete(`/services/${id}`, authHeader);
+      setSuccess("Đã xóa dịch vụ");
+      fetchData();
+    } catch (err) { setError("Xóa thất bại"); }
+  };
+
+  // Logic CRUD Barber
+  const handleBarberSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const data = { ...barberForm, experienceYears: Number(barberForm.experienceYears) };
+      if (editingId) {
+        await API.put(`/barbers/${editingId}`, data, authHeader);
+        setSuccess("Cập nhật Barber thành công");
+      } else {
+        await API.post("/barbers", data, authHeader);
+        setSuccess("Thêm Barber thành công");
+      }
+      setBarberForm({ name: "", specialty: "", experienceYears: "", avatar: "" });
+      setEditingId(null);
+      fetchData();
+    } catch (err) { setError("Lỗi xử lý Barber"); }
+  };
+
+  const deleteBarber = async (id) => {
+    if (!window.confirm("Xóa Barber này?")) return;
+    try {
+      await API.delete(`/barbers/${id}`, authHeader);
+      setSuccess("Đã xóa Barber");
+      fetchData();
+    } catch (err) { setError("Xóa thất bại"); }
   };
 
   return (
@@ -207,11 +261,97 @@ export default function Admin() {
           </div>
         )}
 
-        {/* CÁC TAB KHÁC (SERVICES/BARBERS) SẼ TIẾP TỤC ĐƯỢC XÂY DỰNG THEO CẤU TRÚC NÀY */}
-        {(activeTab === TABS.SERVICES || activeTab === TABS.BARBERS) && (
-          <div className="text-center py-20 bg-white rounded-xl">
-            <i className="fas fa-tools text-5xl text-gray-200 mb-4"></i>
-            <p className="text-gray-500">Tính năng quản lý {activeTab} đang được hoàn thiện...</p>
+        {/* SERVICES MANAGEMENT */}
+        {activeTab === TABS.SERVICES && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="bg-white p-6 rounded-xl shadow-sm h-fit">
+              <h3 className="font-bold mb-4">{editingId ? "Sửa dịch vụ" : "Thêm dịch vụ mới"}</h3>
+              <form onSubmit={handleServiceSubmit} className="space-y-3">
+                <input placeholder="Tên dịch vụ" className="w-full border p-2 rounded" value={serviceForm.name} onChange={e => setServiceForm({...serviceForm, name: e.target.value})} required />
+                <input placeholder="Giá (VNĐ)" type="number" className="w-full border p-2 rounded" value={serviceForm.price} onChange={e => setServiceForm({...serviceForm, price: e.target.value})} required />
+                <input placeholder="Thời gian (phút)" type="number" className="w-full border p-2 rounded" value={serviceForm.durationMinutes} onChange={e => setServiceForm({...serviceForm, durationMinutes: e.target.value})} required />
+                <input placeholder="Link ảnh" className="w-full border p-2 rounded" value={serviceForm.image} onChange={e => setServiceForm({...serviceForm, image: e.target.value})} />
+                <textarea placeholder="Mô tả" className="w-full border p-2 rounded" value={serviceForm.description} onChange={e => setServiceForm({...serviceForm, description: e.target.value})} />
+                <div className="flex gap-2">
+                  <button type="submit" className="flex-1 bg-black text-white p-2 rounded font-bold">Lưu</button>
+                  {editingId && <button type="button" onClick={() => {setEditingId(null); setServiceForm({name:"",price:"",durationMinutes:"",image:"",description:""})}} className="bg-gray-200 p-2 rounded">Hủy</button>}
+                </div>
+              </form>
+            </div>
+            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="p-4">Dịch vụ</th>
+                    <th className="p-4">Giá</th>
+                    <th className="p-4">Thời gian</th>
+                    <th className="p-4 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {services.map(s => (
+                    <tr key={s._id} className="border-b">
+                      <td className="p-4 font-bold">{s.name}</td>
+                      <td className="p-4">{formatPrice(s.price)}</td>
+                      <td className="p-4">{s.durationMinutes}m</td>
+                      <td className="p-4 text-right space-x-2">
+                        <button onClick={() => {setEditingId(s._id); setServiceForm({name:s.name, price:s.price, durationMinutes:s.durationMinutes, image:s.image||"", description:s.description||""})}} className="text-blue-600"><i className="fas fa-edit"></i></button>
+                        <button onClick={() => deleteService(s._id)} className="text-red-600"><i className="fas fa-trash"></i></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* BARBERS MANAGEMENT */}
+        {activeTab === TABS.BARBERS && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="bg-white p-6 rounded-xl shadow-sm h-fit">
+              <h3 className="font-bold mb-4">{editingId ? "Sửa Stylist" : "Thêm Stylist mới"}</h3>
+              <form onSubmit={handleBarberSubmit} className="space-y-3">
+                <input placeholder="Tên Stylist" className="w-full border p-2 rounded" value={barberForm.name} onChange={e => setBarberForm({...barberForm, name: e.target.value})} required />
+                <input placeholder="Chuyên môn (ví dụ: Fade & Undercut)" className="w-full border p-2 rounded" value={barberForm.specialty} onChange={e => setBarberForm({...barberForm, specialty: e.target.value})} required />
+                <input placeholder="Kinh nghiệm (năm)" type="number" className="w-full border p-2 rounded" value={barberForm.experienceYears} onChange={e => setBarberForm({...barberForm, experienceYears: e.target.value})} required />
+                <input placeholder="Link Avatar" className="w-full border p-2 rounded" value={barberForm.avatar} onChange={e => setBarberForm({...barberForm, avatar: e.target.value})} />
+                <div className="flex gap-2">
+                  <button type="submit" className="flex-1 bg-black text-white p-2 rounded font-bold">Lưu</button>
+                  {editingId && <button type="button" onClick={() => {setEditingId(null); setBarberForm({name:"",specialty:"",experienceYears:"",avatar:""})}} className="bg-gray-200 p-2 rounded">Hủy</button>}
+                </div>
+              </form>
+            </div>
+            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="p-4">Stylist</th>
+                    <th className="p-4">Chuyên môn</th>
+                    <th className="p-4">Kinh nghiệm</th>
+                    <th className="p-4 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {barbers.map(b => (
+                    <tr key={b._id} className="border-b">
+                      <td className="p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                          {b.avatar && <img src={b.avatar} alt="" className="w-full h-full object-cover" />}
+                        </div>
+                        <span className="font-bold">{b.name}</span>
+                      </td>
+                      <td className="p-4">{b.specialty}</td>
+                      <td className="p-4">{b.experienceYears} năm</td>
+                      <td className="p-4 text-right space-x-2">
+                        <button onClick={() => {setEditingId(b._id); setBarberForm({name:b.name, specialty:b.specialty, experienceYears:b.experienceYears, avatar:b.avatar||""})}} className="text-blue-600"><i className="fas fa-edit"></i></button>
+                        <button onClick={() => deleteBarber(b._id)} className="text-red-600"><i className="fas fa-trash"></i></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </main>
