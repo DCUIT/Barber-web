@@ -22,6 +22,11 @@ export default function Admin() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // States cho Search & Filter Bookings
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterBarberId, setFilterBarberId] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
   const token = localStorage.getItem("token");
   const authHeader = { headers: { Authorization: `Bearer ${token}` } };
 
@@ -50,8 +55,16 @@ export default function Admin() {
         setBarbers(res.data);
       }
       if (activeTab === TABS.BOOKINGS) {
-        const res = await API.get("/bookings", authHeader);
+        let url = "/bookings?";
+        if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}&`;
+        if (filterBarberId) url += `barberId=${encodeURIComponent(filterBarberId)}&`;
+        if (filterStatus) url += `status=${encodeURIComponent(filterStatus)}&`;
+        
+        const res = await API.get(url, authHeader);
         setBookings(res.data);
+        // Đảm bảo barbers đã được load để dùng cho filter
+        const barbersRes = await API.get("/barbers");
+        setBarbers(barbersRes.data || []);
       }
       if (activeTab === TABS.USERS) {
         const res = await API.get("/auth/users", authHeader); // Giả định endpoint backend
@@ -238,7 +251,48 @@ export default function Admin() {
 
         {/* BOOKINGS TABLE */}
         {activeTab === TABS.BOOKINGS && (
-          <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
+          <div className="bg-white rounded-xl shadow-sm">
+            {/* Search and Filter Controls */}
+            <div className="p-4 border-b flex flex-wrap gap-4 items-center">
+              <input
+                type="text"
+                placeholder="Tìm kiếm khách hàng..."
+                className="border p-2 rounded flex-1 min-w-[200px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <select
+                className="border p-2 rounded min-w-[150px]"
+                value={filterBarberId}
+                onChange={(e) => setFilterBarberId(e.target.value)}
+              >
+                <option value="">Lọc theo Stylist</option>
+                {barbers.map((b) => (
+                  <option key={b._id} value={b._id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="border p-2 rounded min-w-[150px]"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="">Lọc theo trạng thái</option>
+                <option value="Pending">Pending</option>
+                <option value="Accepted">Accepted</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <button
+                onClick={fetchData}
+                className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded font-bold"
+              >
+                Áp dụng
+              </button>
+            </div>
+            
+            <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-gray-50 border-b">
                 <tr>
