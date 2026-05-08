@@ -238,7 +238,7 @@ export default function Admin() {
 
         {/* BOOKINGS TABLE */}
         {activeTab === TABS.BOOKINGS && (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-gray-50 border-b">
                 <tr>
@@ -291,7 +291,7 @@ export default function Admin() {
 
         {/* USERS TABLE */}
         {activeTab === TABS.USERS && (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-gray-50 border-b">
                 <tr>
@@ -359,7 +359,7 @@ export default function Admin() {
                 </div>
               </form>
             </div>
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-gray-50 border-b">
                   <tr>
@@ -411,7 +411,7 @@ export default function Admin() {
                 </div>
               </form>
             </div>
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-gray-50 border-b">
                   <tr>

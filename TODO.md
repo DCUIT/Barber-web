@@ -36,6 +36,7 @@
 - [ ] Login/Register + role user/barber/admin
 - [ ] CRUD + responsive
 - [x] Upload ảnh (services/barbers)
+- [x] Search/filter (bookings)
 - [ ] Realtime booking (websocket/polling)
 - [ ] Deploy
 

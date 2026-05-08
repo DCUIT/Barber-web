@@ -21,7 +21,7 @@ body {
 header {
   background: #000;
   color: white;
-  padding: 20px 50px;
+  padding: 15px 5%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -178,7 +178,7 @@ select option {
   font-size: 32px;
   font-weight: 800;
   margin-bottom: 40px;
-  color: #333; /* Default text color for light theme */
+  color: #333;
 }
 
 .grid-container {
@@ -211,8 +211,25 @@ select option {
   font-weight: bold;
 }
 
+/* Responsive Breakpoints */
+@media (max-width: 768px) {
+  header {
+    padding: 10px 15px;
+  }
+  .logo {
+    font-size: 1rem;
+  }
+  .booking-container h2 {
+    font-size: 24px;
+  }
+  .services {
+    padding: 30px 15px;
+  }
+}
+
 @media (max-width: 640px) {
   .form-row {
     flex-direction: column;
+    gap: 0;
   }
 }
