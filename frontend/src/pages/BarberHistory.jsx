@@ -38,9 +38,9 @@ export default function BarberHistory() {
   if (loading) return <div className="py-12 text-center">Đang tải...</div>;
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="min-h-screen text-white">
       <section className="py-10 text-center">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 uppercase tracking-tight">Lịch sử booking</h1>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-[#d4a373] uppercase tracking-tight">Lịch sử booking</h1>
       </section>
 
       <main className="container mx-auto px-4 pb-20">
@@ -56,10 +56,10 @@ export default function BarberHistory() {
         ) : (
           <div className="max-w-3xl mx-auto space-y-4">
             {bookings.map((b) => (
-              <div key={b._id || b.id} className="bg-white rounded-2xl shadow-sm p-6">
+              <div key={b._id || b.id} className="bg-[#1a1a1a] border border-gray-800 rounded-2xl shadow-lg p-6">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <div className="font-bold text-lg">Booking</div>
+                    <div className="font-bold text-lg text-[#d4a373]">Booking</div>
                     <div className="text-gray-500 text-sm mt-1">{b.bookingDate} • {b.bookingTime}</div>
                   </div>
                   {statusLabel(b.status)}

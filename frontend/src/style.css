@@ -7,7 +7,11 @@
 body {
   font-family: "Arial", sans-serif;
   margin: 0;
-  background-color: #f4f4f4;
+  background-color: #0c0c0c;
+  /* Họa tiết vải/da tối màu giúp giao diện có chiều sâu hơn */
+  background-image: url("https://www.transparenttextures.com/patterns/black-linen.png");
+  color: #f0f0f0;
+  min-h-screen;
 }
 
 /* Wrapper cho trang chủ */
@@ -144,7 +148,7 @@ select {
 .services {
   padding: 80px 20px;
   text-align: center;
-  background: #ffffff;
+  background: transparent;
 }
 
 .services h2 {
@@ -162,10 +166,12 @@ select {
 }
 
 .card {
-  background: white;
+  background: #1a1a1a;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid #2a2a2a;
+  color: white;
 }
 
 .grid-container .card img {

@@ -70,7 +70,7 @@ export default function Admin() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-[#0c0c0c]">
       {/* SIDEBAR */}
       <aside className="w-64 bg-black text-white p-6 hidden md:block">
         <div className="text-[#d4a373] font-bold text-xl mb-10 tracking-widest uppercase">Admin Panel</div>
