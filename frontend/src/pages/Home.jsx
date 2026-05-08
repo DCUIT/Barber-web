@@ -89,13 +89,14 @@ export default function Home() {
           <div className="grid-container text-black"> {/* Ensure text is black on white cards */}
             {services.slice(0, 3).map((s) => (
               <div key={s._id} className="card">
-                <img 
+                  <img 
                   src={s.image || "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=500"} 
                   alt={s.name} 
                 />
                 <div className="card-info">
                   <h4 className="font-bold">{s.name.toUpperCase()}</h4>
                   <p className="price">{new Intl.NumberFormat("vi-VN").format(s.price)}đ</p>
+                  <p className="duration">{s.durationMinutes ? `${s.durationMinutes} phút` : "—"}</p>
                 </div>
               </div>
             ))}
