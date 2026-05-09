@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import API from "../api";
 import toast from "react-hot-toast";
 
@@ -161,14 +161,14 @@ export default function Booking() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex items-center justify-center px-4">
       {/* Booking Form Area */}
-      <section id="booking" className="services">
-        <div className="booking-form">
-            <h3>BOOK AN APPOINTMENT</h3>
+      <section id="booking" className="services" style={{ maxWidth: 900, width: "100%" }}>
+        <div className="booking-form" style={{ width: "100%" }}>
+            <h3>ĐẶT LỊCH HẸN</h3>
           
           <div className="form-group">
-            <label>1. SELECT SERVICE</label>
+            <label>1. CHỌN DỊCH VỤ</label>
             <select value={selectedServiceId} onChange={(e) => setSelectedServiceId(e.target.value)}>
               <option value="">Select a service...</option>
               {services.map((s) => (
@@ -180,7 +180,7 @@ export default function Booking() {
           </div>
 
           <div className="form-group">
-            <label>2. SELECT STAFF</label>
+            <label>2. CHỌN THỢ</label>
             <select value={selectedBarberId} onChange={(e) => setSelectedBarberId(e.target.value)}>
               <option value="">Select staff...</option>
               {barbers.map((b) => (
@@ -198,7 +198,7 @@ export default function Booking() {
             <div className="time-slots" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "15px" }}>
               {availableSlots.length === 0 ? (
               <div className="text-gray-500 text-center py-2" style={{ gridColumn: "span 2" }}>
-                  {loadingSlots ? "Loading time slots..." : "No available time slots"}
+                  {loadingSlots ? "Đang tải khung giờ..." : "Không có khung giờ trống"}
                 </div>
               ) : (
                 availableSlots.map((t) => (
@@ -254,20 +254,20 @@ export default function Booking() {
             <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="fas fa-check text-3xl"></i>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Booking Successful!</h2>
-            <p className="text-gray-500 mb-6 text-sm">Thank you for trusting The Cutting Edge.</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Đặt lịch thành công!</h2>
+            <p className="text-gray-500 mb-6 text-sm">Cảm ơn bạn đã tin tưởng The Cutting Edge.</p>
             
             <div className="bg-gray-50 rounded-xl p-4 text-left space-y-2 mb-6">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Service:</span>
+                <span className="text-gray-400">Dịch vụ:</span>
                 <span className="font-bold">{selectedService?.name}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Staff:</span>
+                <span className="text-gray-400">Thợ:</span>
                 <span className="font-bold">{barbers.find(b => b._id === selectedBarberId)?.name}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Time:</span>
+                <span className="text-gray-400">Thời gian:</span>
                 <span className="font-bold text-[#d4a373]">{lastBooking.bookingTime} - {lastBooking.bookingDate}</span>
               </div>
             </div>
@@ -276,7 +276,7 @@ export default function Booking() {
               onClick={() => setShowSuccessModal(false)}
               className="w-full btn-submit m-0 py-3"
             >
-              Close
+              Đóng
             </button>
 
           </div>

@@ -17,6 +17,7 @@ function renderStars(rating) {
     </span>
   );
 }
+
 import API from "../api";
 import { useNavigate } from "react-router-dom";
 import "../style.css";
@@ -98,9 +99,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* BARBERS (Rating đơn giản) */}
+      {/* Simple barber rating (stars) */}
       <section className="services" style={{ marginTop: 24 }}>
-        <h2>BARBER ĐƯỢC ĐÁNH GIÁ</h2>
+        <h2>Barber Rating</h2>
         {loading ? (
           <div className="text-center">Đang tải...</div>
         ) : (
