@@ -4,6 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import toast from "react-hot-toast";
 
+const STATUS_COLORS = {
+  Pending: "bg-amber-100 text-amber-700 border-amber-200",
+  Accepted: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  Completed: "bg-blue-100 text-blue-700 border-blue-200",
+  Cancelled: "bg-rose-100 text-rose-700 border-rose-200",
+};
+
 function pad2(n) {
   return String(n).padStart(2, "0");
 }
@@ -37,6 +44,7 @@ export default function BarberDashboard() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [socketConnected, setSocketConnected] = useState(false);
 
   const [todayBookings, setTodayBookings] = useState([]);
   const [weekDays, setWeekDays] = useState([]); // [{date, weekday, slots}] + maybe bookings handled separately
@@ -122,7 +130,11 @@ export default function BarberDashboard() {
   // realtime: bookingUpdated/newBooking affects dashboard
   useEffect(() => {
     const socket = io("http://localhost:4000");
-    socket.on("connect", () => console.log("Connected (BarberDashboard)"));
+    socket.on("connect", () => {
+      console.log("Connected (BarberDashboard)");
+      setSocketConnected(true);
+    });
+    socket.on("disconnect", () => setSocketConnected(false));
 
     socket.on("newBooking", () => {
       if (tab === "today") fetchToday();
@@ -184,74 +196,60 @@ export default function BarberDashboard() {
         {loading ? <div className="py-6 text-center text-gray-500">Đang tải...</div> : null}
 
         {tab === "today" && (
-          <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm p-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="flex justify-between items-center mb-6">
-               <h2 className="font-bold text-lg uppercase tracking-wider">Danh sách lịch hẹn</h2>
-               <button onClick={fetchToday} className="text-blue-600 text-sm hover:underline">
+               <h2 className="font-bold text-gray-900 ml-6 mt-6">Lịch hẹn hôm nay ({todayStr})</h2>
+               <button onClick={fetchToday} className="mr-6 mt-6 text-blue-600 text-xs font-bold uppercase tracking-widest hover:text-blue-700">
                   <i className="fas fa-sync-alt mr-1"></i> Làm mới
                </button>
-            </div>
-
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <div className="text-sm text-gray-500">Ngày</div>
-                <div className="font-bold text-xl">{todayStr}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Booking</div>
-                <div className="font-bold text-xl">{todayBookings.length}</div>
-              </div>
             </div>
 
             {todayBookings.length === 0 ? (
               <div className="text-center py-10 text-gray-500">Không có booking</div>
             ) : (
-              <div className="space-y-3">
+              <div className="divide-y divide-gray-50">
                 {todayBookings.map((b) => (
-                  <div key={b._id} className="border rounded-xl p-4 flex items-start justify-between gap-4">
-                    <div>
-                      <div className="font-bold">{b.bookingTime}</div>
-                      <div className="text-sm text-gray-600">{b.userId?.username || "Khách"}</div>
-                      <div className="text-sm text-gray-600">{b.serviceId?.name || "Service"}</div>
-                      {b.note ? <div className="text-xs text-gray-500 mt-2">Note: {b.note}</div> : null}
+                  <div key={b._id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-gray-900 text-white rounded-2xl flex flex-col items-center justify-center shadow-lg">
+                        <span className="text-xs font-bold opacity-70">Giờ</span>
+                        <span className="text-lg font-black">{b.bookingTime}</span>
+                      </div>
+                      <div>
+                        <div className="font-black text-gray-900 text-lg">{b.userId?.username || "Khách vãng lai"}</div>
+                        <div className="text-blue-600 font-bold text-sm uppercase">{b.serviceId?.name || "Dịch vụ"}</div>
+                        {b.note && <div className="text-gray-400 text-xs mt-1 italic">"{b.note}"</div>}
+                      </div>
                     </div>
-                    <div>
-                      <div className="flex flex-col gap-2 mb-2">
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                      <div className="flex gap-2">
                         {b.status === "Pending" && (
                           <>
                             <button
                               onClick={() => updateStatus(b._id, "Accepted")}
-                              className="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700"
+                              className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md shadow-emerald-100 transition-all active:scale-95"
                             >
-                              Chấp nhận
+                              Xác nhận
                             </button>
                             <button
                               onClick={() => updateStatus(b._id, "Cancelled")}
-                              className="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-700"
+                              className="bg-white text-rose-600 border border-rose-100 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-rose-50 transition-all"
                             >
-                              Từ chối
+                              Hủy
                             </button>
                           </>
                         )}
                         {b.status === "Accepted" && (
                           <button
                             onClick={() => updateStatus(b._id, "Completed")}
-                            className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700"
+                            className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95"
                           >
                             Hoàn thành
                           </button>
                         )}
                       </div>
                       <span
-                        className={`px-3 py-1 rounded text-xs font-bold ${
-                          b.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : b.status === "Accepted"
-                              ? "bg-green-100 text-green-800"
-                              : b.status === "Completed"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-red-100 text-red-800"
-                        }`}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${STATUS_COLORS[b.status] || "bg-gray-100 text-gray-600"}`}
                       >
                         {b.status}
                       </span>
