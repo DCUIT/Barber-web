@@ -3,13 +3,13 @@ import API from "../api";
 import toast from "react-hot-toast";
 
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "../style.css";
 
 // NOTE: Đây là layout mô phỏng đúng mẫu HTML bạn cung cấp (The Cutting Edge - Đặt Lịch Hẹn).
 // Logic booking thật vẫn giữ: load services/barbers, lấy slots, submit /bookings.
 
 function formatDateInput(d) {
-
   if (!(d instanceof Date) || isNaN(d)) return "";
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -19,7 +19,7 @@ function formatDateInput(d) {
 
 export default function Booking() {
   const navigate = useNavigate();
-  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  const { token } = useAuth(); // Sử dụng AuthContext
 
   const [services, setServices] = useState([]);
   const [barbers, setBarbers] = useState([]);
@@ -40,7 +40,7 @@ export default function Booking() {
   const [lastBooking, setLastBooking] = useState(null);
 
   useEffect(() => {
-    if (!token) {
+    if (!token) { // Kiểm tra token từ AuthContext
       navigate("/login");
       return;
     }
@@ -60,15 +60,7 @@ export default function Booking() {
       }
     };
     fetchInitialData();
-
-    const handleAuthChange = () => {
-      const newToken = localStorage.getItem("token");
-      setToken(newToken);
-      if (!newToken) navigate("/login");
-    };
-    window.addEventListener("auth-change", handleAuthChange);
-    return () => window.removeEventListener("auth-change", handleAuthChange);
-  }, [navigate, token]); // token is now a dependency because setToken can change it
+  }, [navigate, token]);
 
   const authHeader = useMemo(
     () => ({ headers: { Authorization: `Bearer ${token}` } }),

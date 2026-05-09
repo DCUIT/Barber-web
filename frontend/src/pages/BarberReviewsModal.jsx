@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import API from "../api";
+import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
 
 function Stars({ rating = 0 }) {
   const v = Number(rating || 0);
   const full = Math.floor(v);
-  const half = v - full >= 0.5;
+  const half = v - full >= 0.25 && v - full < 0.75; // Adjust half star logic
   const empty = 5 - full - (half ? 1 : 0);
 
   return (
@@ -29,7 +31,7 @@ function Stars({ rating = 0 }) {
 }
 
 export default function BarberReviewsModal({ barber, onClose, onSubmitted }) {
-  const token = localStorage.getItem("token");
+  const { token } = useAuth(); // Sử dụng AuthContext
   const authHeader = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
 
   const [loading, setLoading] = useState(false);
@@ -72,7 +74,7 @@ export default function BarberReviewsModal({ barber, onClose, onSubmitted }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!bookingId) {
-      alert("Vui lòng nhập bookingId để tạo review (bookingId chỉ hợp lệ khi status=Completed)");
+      toast.error("Vui lòng nhập bookingId để tạo review (bookingId chỉ hợp lệ khi status=Completed)");
       return;
     }
 
@@ -94,9 +96,8 @@ export default function BarberReviewsModal({ barber, onClose, onSubmitted }) {
 
       if (onSubmitted) onSubmitted();
       onClose?.();
-    } catch (err) {
-      const msg = err?.response?.data?.msg || "Tạo review thất bại";
-      alert(msg);
+    } catch (error) {
+      toast.error(error?.response?.data?.msg || "Tạo review thất bại");
     } finally {
       setLoading(false);
     }
@@ -203,4 +204,3 @@ export default function BarberReviewsModal({ barber, onClose, onSubmitted }) {
     </div>
   );
 }
-

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import API from "../api";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
+import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
 const STATUS_COLORS = {
@@ -30,8 +31,7 @@ function addDays(date, days) {
 
 export default function BarberDashboard() {
   const navigate = useNavigate();
-  const [token, setToken] = useState(() => localStorage.getItem("token"));
-  const role = localStorage.getItem("role");
+  const { user, token, logout } = useAuth(); // Sử dụng AuthContext
 
   const [tab, setTab] = useState("today"); // today | week
   const [todayStr, setTodayStr] = useState(() => formatYYYYMMDD(new Date()));
@@ -43,10 +43,9 @@ export default function BarberDashboard() {
   );
 
   const handleAuthError = useCallback((e) => {
-    if (e?.response?.status === 401 || e?.response?.data?.msg === "Invalid token") {
-      localStorage.removeItem("token");
-      window.dispatchEvent(new Event("auth-change"));
+    if (e?.response?.status === 401 || e?.response?.data?.msg === "Invalid token" || e?.response?.data?.msg === "Unauthorized") {
       navigate("/login");
+      logout(); // Đảm bảo xóa token và user khỏi context
       toast.error("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
     }
   }, [navigate]);
@@ -119,24 +118,18 @@ export default function BarberDashboard() {
       return;
     }
 
-    if (role && role !== "barber") {
+    if (user?.role && user.role !== "barber") {
       // MVP: chỉ hiển thị cho barber
       // vẫn cho phép xem nếu bạn muốn, nhưng mặc định điều hướng
       // navigate("/");
     }
-
-    const onAuthChange = () => {
-      const t = localStorage.getItem("token");
-      setToken(t);
-      if (!t) navigate("/login");
-    };
-    window.addEventListener("auth-change", onAuthChange);
-    return () => window.removeEventListener("auth-change", onAuthChange);
-  }, [navigate, role, token]);
+  }, [navigate, token, user]); // Thêm user vào dependency
 
   useEffect(() => {
-    if (tab === "today") fetchToday();
-    if (tab === "week") fetchWeek();
+    if (token) { // Chỉ fetch khi có token
+      if (tab === "today") fetchToday();
+      if (tab === "week") fetchWeek();
+    }
   }, [tab, fetchToday, fetchWeek]);
 
   // realtime: bookingUpdated/newBooking affects dashboard

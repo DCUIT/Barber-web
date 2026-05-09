@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import toast from "react-hot-toast";
 import DarkToggle from "./DarkToggle";
+import { useAuth } from "../context/AuthContext";
 
 function MobileNav({
   token,
@@ -141,28 +142,12 @@ function MobileNav({
 
 export default function Navbar() {
   const navigate = useNavigate();
-
-  const [token, setToken] = useState(() => localStorage.getItem("token"));
-  const [username, setUsername] = useState(() => localStorage.getItem("username"));
-  const [role, setRole] = useState(() => localStorage.getItem("role"));
+  const { user, token, logout } = useAuth();
+  const role = user?.role;
+  const username = user?.username;
 
   const [notifications, setNotifications] = useState([]);
   const [showNotif, setShowNotif] = useState(false);
-
-  const updateAuth = useCallback(() => {
-    setToken(localStorage.getItem("token"));
-    setUsername(localStorage.getItem("username"));
-    setRole(localStorage.getItem("role"));
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("storage", updateAuth);
-    window.addEventListener("auth-change", updateAuth);
-    return () => {
-      window.removeEventListener("storage", updateAuth);
-      window.removeEventListener("auth-change", updateAuth);
-    };
-  }, [updateAuth]);
 
   // Realtime Notifications
   useEffect(() => {
@@ -196,10 +181,7 @@ export default function Navbar() {
   }, [role]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    localStorage.removeItem("role");
-    updateAuth();
+    logout();
     navigate("/");
   };
 

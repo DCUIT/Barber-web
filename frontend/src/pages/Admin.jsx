@@ -4,6 +4,7 @@ import { formatCurrency as formatPrice } from "../utils/formatPrice"; // Giả s
 import { io } from "socket.io-client"; // Import socket.io-client
 import toast from "react-hot-toast";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
+import { useAuth } from "../context/AuthContext";
 import ConfirmDialog from "../components/ConfirmDialog";
 
 const TABS = { DASHBOARD: "dashboard", SERVICES: "services", BARBERS: "barbers", BOOKINGS: "bookings", USERS: "users" };
@@ -49,8 +50,8 @@ export default function Admin() {
   const [itemsPerPage] = useState(10); // Số lượng mục trên mỗi trang
   const [totalBookingsCount, setTotalBookingsCount] = useState(0);
   const [dashboardChartData, setDashboardChartData] = useState([]);
-
-  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  
+  const { token } = useAuth(); // Sử dụng AuthContext
   const authHeader = useMemo(
     () => ({ headers: { Authorization: `Bearer ${token}` } }),
     [token]

@@ -1,7 +1,8 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { Toaster } from "react-hot-toast";
+import { useAuth } from "./context/AuthContext";
 
 import Home from "./pages/Home";
 import Booking from "./pages/Booking";
@@ -28,14 +29,14 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/booking" element={<Booking />} />
-          <Route path="/my-bookings" element={<BarberHistory />} />
-          <Route path="/barber-dashboard" element={<BarberDashboard />} />
-          <Route path="/barber/bookings" element={<BarberBookings />} />
+          <Route path="/my-bookings" element={<ProtectedRoute><BarberHistory /></ProtectedRoute>} />
+          <Route path="/barber-dashboard" element={<ProtectedRoute allowedRoles={["barber"]}><BarberDashboard /></ProtectedRoute>} />
+          <Route path="/barber/bookings" element={<ProtectedRoute allowedRoles={["barber"]}><BarberBookings /></ProtectedRoute>} />
 
           <Route path="/success" element={<Success />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           {/* <Route path="/booking-pro" element={<BookingPro />} /> */} {/* Removed old booking page */}
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><Admin /></ProtectedRoute>} />
         </Routes>
       </div>
       <Footer />

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import API from "../api";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client"; // Import socket.io-client
+import { useAuth } from "../context/AuthContext";
 
 const statusMap = {
   Pending: { bg: "bg-yellow-100", fg: "text-yellow-800", label: "Chờ xác nhận" },
@@ -16,7 +17,7 @@ const statusLabel = (s) => {
 
 export default function BarberHistory() {
   const navigate = useNavigate();
-  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  const { token } = useAuth(); // Sử dụng AuthContext
 
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,19 +28,8 @@ export default function BarberHistory() {
   );
 
   useEffect(() => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
-    const handleAuthChange = () => {
-      const newToken = localStorage.getItem("token");
-      setToken(newToken);
-      if (!newToken) navigate("/login");
-    };
-    window.addEventListener("auth-change", handleAuthChange);
-    return () => window.removeEventListener("auth-change", handleAuthChange);
-  }, [navigate, token]);
+    if (!token) navigate("/login");
+  }, [navigate, token]); // token từ AuthContext
 
   const fetchBookings = useCallback(async () => {
     if (!token) return; // Don't fetch if no token

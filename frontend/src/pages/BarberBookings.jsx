@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api";
 import { io } from "socket.io-client";
+import { useAuth } from "../context/AuthContext";
 
 const statusOptions = [
   { value: "Pending", label: "Pending" },
@@ -20,8 +21,7 @@ function statusBadge(status) {
 
 export default function BarberBookings() {
   const navigate = useNavigate();
-  const [token, setToken] = useState(() => localStorage.getItem("token"));
-  const role = localStorage.getItem("role");
+  const { user, token, logout } = useAuth(); // Sử dụng AuthContext
 
   const authHeader = useMemo(
     () => ({ headers: { Authorization: `Bearer ${token}` } }),
@@ -61,22 +61,14 @@ export default function BarberBookings() {
       return;
     }
 
-    const onAuthChange = () => {
-      const t = localStorage.getItem("token");
-      setToken(t);
-      if (!t) navigate("/login");
-    };
-
-    window.addEventListener("auth-change", onAuthChange);
-    return () => window.removeEventListener("auth-change", onAuthChange);
-  }, [navigate, token]);
+  }, [navigate, token]); // token từ AuthContext
 
   useEffect(() => {
-    if (tabNeedsGuard(role)) {
+    if (tabNeedsGuard(user?.role)) { // Kiểm tra role từ AuthContext
       // If you want to enforce role gate, redirect here.
     }
     fetchBookingsForDate();
-  }, [fetchBookingsForDate, role]);
+  }, [fetchBookingsForDate, user]); // Depend on user từ AuthContext
 
   useEffect(() => {
     const socket = io("http://localhost:4000");
@@ -185,4 +177,3 @@ export default function BarberBookings() {
 function tabNeedsGuard(role) {
   return role && role !== "barber";
 }
-

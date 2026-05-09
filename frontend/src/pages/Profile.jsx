@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api";
 import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
 
 export default function Profile() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-
+  const { user, token } = useAuth(); // Sử dụng AuthContext
+  const role = user?.role;
   const authHeader = useMemo(
     () => ({ headers: { Authorization: `Bearer ${token}` } }),
     [token]
@@ -42,14 +43,12 @@ export default function Profile() {
 
     (async () => {
       setLoading(true);
-      try {
-        const role = localStorage.getItem("role");
-
+      try {        
         const userRes = await API.get("/auth/me", authHeader);
         if (cancelled) return;
 
         if (role === "barber") {
-          const barberRes = await API.get("/barber/me", authHeader);
+          const barberRes = await API.get(`/barber/me`, authHeader);
           if (cancelled) return;
 
           setProfile((p) => ({
@@ -76,7 +75,7 @@ export default function Profile() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    })(); // eslint-disable-next-line react-hooks/exhaustive-deps
 
     return () => {
       cancelled = true;
@@ -90,14 +89,12 @@ export default function Profile() {
 
     setLoading(true);
     try {
-      const role = localStorage.getItem("role");
-
       if (role === "barber") {
         await API.put(
           "/barber/me",
           {
             avatar: profile.avatar || "",
-            experienceYears: profile.experienceYears ?? 0,
+            experienceYears: Number(profile.experienceYears) ?? 0,
             specialty: profile.specialty || "",
             workingHours: profile.workingHours || {},
             dayOff: profile.dayOff || {},
@@ -114,7 +111,6 @@ export default function Profile() {
           authHeader
         );
       }
-
       toast.success("Cập nhật profile thành công");
     } catch (err) {
       toast.error(err?.response?.data?.msg || "Cập nhật thất bại");
@@ -198,7 +194,7 @@ export default function Profile() {
                 />
               </div>
 
-              {localStorage.getItem("role") === "barber" && (
+              {role === "barber" && (
                 <div className="space-y-4 pt-3 border-t">
                   <h3 className="text-lg font-bold">Barber profile</h3>
 
@@ -350,4 +346,3 @@ export default function Profile() {
     </div>
   );
 }
-
