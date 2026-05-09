@@ -3,6 +3,8 @@ import API from "../api";
 import { formatCurrency as formatPrice } from "../utils/formatPrice"; // Giả sử hàm này vẫn dùng được cho VNĐ
 import { io } from "socket.io-client"; // Import socket.io-client
 import toast from "react-hot-toast";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
+import ConfirmDialog from "../components/ConfirmDialog";
 
 const TABS = { DASHBOARD: "dashboard", SERVICES: "services", BARBERS: "barbers", BOOKINGS: "bookings", USERS: "users" };
 
@@ -29,8 +31,14 @@ export default function Admin() {
   
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+
+  // Modal confirmation states
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   // States cho Search & Filter Bookings
   const [searchTerm, setSearchTerm] = useState("");
@@ -47,6 +55,22 @@ export default function Admin() {
     [token]
   );
 
+  // Xử lý dữ liệu cho biểu đồ (Nhóm theo ngày)
+  const chartData = useMemo(() => {
+    const dataMap = {};
+    // Lấy dữ liệu từ bookings hiện có (lưu ý: nếu backend phân trang thì biểu đồ chỉ hiển thị dữ liệu trang đó)
+    // Trong thực tế, nên có 1 API riêng cho Analytics trả về data 7-30 ngày gần nhất.
+    bookings.forEach(b => {
+      const date = b.bookingDate;
+      if (!dataMap[date]) {
+        dataMap[date] = { name: date, revenue: 0, count: 0 };
+      }
+      dataMap[date].revenue += b.serviceId?.price || 0;
+      dataMap[date].count += 1;
+    });
+    return Object.values(dataMap).sort((a, b) => new Date(a.name) - new Date(b.name));
+  }, [bookings]);
+
   // Make fetchData a useCallback to prevent unnecessary re-renders and issues with socket.io useEffect
   const fetchData = useCallback(async () => {
     if (!token) { // Ensure token exists before fetching data
@@ -56,11 +80,13 @@ export default function Admin() {
     setLoading(true);
     try {
       if (activeTab === TABS.DASHBOARD) {
-        const res = await API.get("/bookings", authHeader); // Lấy booking để tính stats tạm thời
+        // Lấy 100 booking gần nhất để vẽ biểu đồ (thay vì chỉ 10 như mặc định)
+        const res = await API.get("/bookings?limit=100", authHeader);
         const barbersRes = await API.get("/barbers");
         const usersRes = await API.get("/auth/users", authHeader);
 
         const allBookings = res.data.bookings || res.data; // Hỗ trợ cả 2 cấu trúc
+        setBookings(Array.isArray(allBookings) ? allBookings : []);
         setStats({
           totalBookings: res.data.totalCount || allBookings.length,
           totalRevenue: Array.isArray(allBookings) ? allBookings.reduce((acc, curr) => acc + (curr.serviceId?.price || 0), 0) : 0,
@@ -95,7 +121,7 @@ export default function Admin() {
         setUsers(res.data || []);
       }
     } catch (err) {
-      setError(err.response?.data?.msg || "Lỗi tải dữ liệu");
+      toast.error(err.response?.data?.msg || "Lỗi tải dữ liệu");
     } finally {
       setLoading(false);
     }
@@ -120,8 +146,9 @@ export default function Admin() {
 
     socket.on('newBooking', (newBooking) => {
       toast.success(`Khách ${newBooking.userId?.username || 'mới'} vừa đặt lịch!`, { duration: 5000 });
-      if (activeTab === TABS.BOOKINGS) {
-        fetchData(); // Refetch data to include new booking
+      // Luôn refetch nếu ở Dashboard để cập nhật số lượng và doanh thu
+      if (activeTab === TABS.BOOKINGS || activeTab === TABS.DASHBOARD) {
+        fetchData();
       }
     });
 
@@ -142,42 +169,66 @@ export default function Admin() {
   const updateBookingStatus = async (id, status) => {
     try {
       await API.put(`/bookings/${id}/status`, { status }, authHeader);
-      setSuccess("Cập nhật trạng thái thành công");
+      toast.success("Cập nhật trạng thái thành công");
       fetchData();
     } catch (err) {
-      setError("Cập nhật thất bại");
+      toast.error("Cập nhật thất bại");
     }
   };
 
   const deleteBooking = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa lịch hẹn này?")) return;
-    try {
-      await API.delete(`/bookings/${id}`, authHeader);
-      setSuccess("Đã xóa lịch hẹn");
-      fetchData();
-    } catch (err) {
-      setError("Xóa lịch hẹn thất bại");
-    }
+    setConfirmModal({
+      open: true,
+      title: "Xác nhận xóa",
+      message: "Bạn có chắc muốn xóa lịch hẹn này?",
+      onConfirm: async () => {
+        try {
+          await API.delete(`/bookings/${id}`, authHeader);
+          toast.success("Đã xóa lịch hẹn");
+          fetchData();
+        } catch (err) {
+          toast.error("Xóa lịch hẹn thất bại");
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+      }
+    });
   };
 
   const deleteUser = async (id) => {
-    if (!window.confirm("Xóa người dùng này sẽ không thể hoàn tác. Tiếp tục?")) return;
+    setConfirmModal({
+      open: true,
+      title: "Xóa người dùng",
+      message: "Xóa người dùng này sẽ không thể hoàn tác. Tiếp tục?",
+      onConfirm: async () => {
+        try {
+          await API.delete(`/auth/users/${id}`, authHeader);
+          toast.success("Đã xóa người dùng");
+          fetchData();
+        } catch (err) {
+          toast.error("Xóa người dùng thất bại");
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+      }
+    });
+  };
+
+  const toggleBlockUser = async (id, currentStatus) => {
     try {
-      await API.delete(`/auth/users/${id}`, authHeader);
-      setSuccess("Đã xóa người dùng");
+      await API.put(`/auth/users/${id}/block`, { isBlocked: !currentStatus }, authHeader);
+      toast.success(currentStatus ? "Đã bỏ chặn người dùng" : "Đã chặn người dùng");
       fetchData();
     } catch (err) {
-      setError("Xóa người dùng thất bại");
+      toast.error("Thao tác thất bại");
     }
   };
 
   const updateUserRole = async (id, newRole) => {
     try {
       await API.put(`/auth/users/${id}/role`, { role: newRole }, authHeader);
-      setSuccess("Đã cập nhật quyền hạn");
+      toast.success("Đã cập nhật quyền hạn");
       fetchData();
     } catch (err) {
-      setError("Cập nhật quyền thất bại");
+      toast.error("Cập nhật quyền thất bại");
     }
   };
 
@@ -189,29 +240,39 @@ export default function Admin() {
       const data = { ...serviceForm, price: Number(serviceForm.price), durationMinutes: Number(serviceForm.durationMinutes) };
       if (editingId) {
         await API.put(`/services/${editingId}`, data, authHeader);
-        setSuccess("Cập nhật dịch vụ thành công");
+        toast.success("Cập nhật dịch vụ thành công");
       } else {
         const imageUrl = serviceForm.image; // Giả sử đã có URL từ upload hoặc nhập tay
         await API.post("/services", { ...data, image: imageUrl }, authHeader);
-        setSuccess("Thêm dịch vụ thành công");
+        toast.success("Thêm dịch vụ thành công");
       }
       // Reset form và editingId sau khi submit
       setServiceForm({ name: "", price: "", durationMinutes: "", image: "", description: "" });
       setEditingId(null);
       fetchData();
     } catch (err) { 
-      setError("Lỗi xử lý dịch vụ"); 
+      toast.error("Lỗi xử lý dịch vụ"); 
     } finally { setLoading(false); }
   };
 
   const deleteService = async (id) => {
-    if (!window.confirm("Xóa dịch vụ này?")) return;
-    try {
-      await API.delete(`/services/${id}`, authHeader);
-      setSuccess("Đã xóa dịch vụ");
-      fetchData();
-    } catch (err) { setError("Xóa thất bại"); }
+    setConfirmModal({
+      open: true,
+      title: "Xóa dịch vụ",
+      message: "Bạn có chắc muốn xóa dịch vụ này?",
+      onConfirm: async () => {
+        try {
+          await API.delete(`/services/${id}`, authHeader);
+          toast.success("Đã xóa dịch vụ");
+          fetchData();
+        } catch (err) {
+          toast.error("Xóa thất bại");
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+      }
+    });
   };
+
   // Hàm xử lý upload ảnh lên Cloudinary
   const handleImageUpload = async (file, type) => {
     if (!file) return;
@@ -222,10 +283,10 @@ export default function Admin() {
       const res = await API.post('/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` },
       });
-      setSuccess("Upload ảnh thành công!");
+      toast.success("Upload ảnh thành công!");
       return res.data.imageUrl;
     } catch (err) {
-      setError("Upload ảnh thất bại!");
+      toast.error("Upload ảnh thất bại!");
       return null;
     } finally { setUploadingImage(false); }
   };
@@ -238,26 +299,35 @@ export default function Admin() {
       const data = { ...barberForm, experienceYears: Number(barberForm.experienceYears) };
       if (editingId) {
         await API.put(`/barbers/${editingId}`, data, authHeader);
-        setSuccess("Cập nhật Barber thành công");
+        toast.success("Cập nhật Barber thành công");
       } else {
         await API.post("/barbers", { ...data, avatar: barberForm.avatar }, authHeader);
-        setSuccess("Thêm Barber thành công");
+        toast.success("Thêm Barber thành công");
       }
       // Reset form và editingId sau khi submit
       setBarberForm({ name: "", specialty: "", experienceYears: "", avatar: "" });
       setEditingId(null);
       fetchData();
-    } catch (err) { setError("Lỗi xử lý Barber"); }
+    } catch (err) { toast.error("Lỗi xử lý Barber"); }
     finally { setLoading(false); }
   };
 
   const deleteBarber = async (id) => {
-    if (!window.confirm("Xóa Barber này?")) return;
-    try {
-      await API.delete(`/barbers/${id}`, authHeader);
-      setSuccess("Đã xóa Barber");
-      fetchData();
-    } catch (err) { setError("Xóa thất bại"); }
+    setConfirmModal({
+      open: true,
+      title: "Xóa Barber",
+      message: "Bạn có chắc muốn xóa Stylist này?",
+      onConfirm: async () => {
+        try {
+          await API.delete(`/barbers/${id}`, authHeader);
+          toast.success("Đã xóa Barber");
+          fetchData();
+        } catch (err) {
+          toast.error("Xóa thất bại");
+        }
+        setConfirmModal(prev => ({ ...prev, open: false }));
+      }
+    });
   };
 
   return (
@@ -291,27 +361,60 @@ export default function Admin() {
           <div className="text-gray-600 font-medium">Chào mừng, Quản trị viên</div>
         </div>
 
-        {error && <div className="bg-red-100 text-red-700 p-4 rounded mb-6">{error}</div>}
-        {success && <div className="bg-green-100 text-green-700 p-4 rounded mb-6">{success}</div>}
-
         {/* DASHBOARD TAB */}
         {activeTab === TABS.DASHBOARD && stats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
-              <div className="text-gray-500 text-sm uppercase font-bold">Tổng lịch hẹn</div>
-              <div className="text-3xl font-bold">{stats.totalBookings}</div>
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
+                <div className="text-gray-500 text-sm uppercase font-bold">Tổng lịch hẹn</div>
+                <div className="text-3xl font-bold">{stats.totalBookings}</div>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                <div className="text-gray-500 text-sm uppercase font-bold">Doanh thu</div>
+                <div className="text-3xl font-bold">{formatPrice(stats.totalRevenue)}</div>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <div className="text-gray-500 text-sm uppercase font-bold">Tổng khách hàng</div>
+                <div className="text-3xl font-bold">{stats.totalUsers}</div>
+              </div>
+              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
+                <div className="text-gray-500 text-sm uppercase font-bold">Tổng Stylists</div>
+                <div className="text-3xl font-bold">{stats.totalBarbers}</div>
+              </div>
             </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-              <div className="text-gray-500 text-sm uppercase font-bold">Doanh thu</div>
-              <div className="text-3xl font-bold">{formatPrice(stats.totalRevenue)}</div>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-              <div className="text-gray-500 text-sm uppercase font-bold">Tổng khách hàng</div>
-              <div className="text-3xl font-bold">{stats.totalUsers}</div>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
-              <div className="text-gray-500 text-sm uppercase font-bold">Tổng Stylists</div>
-              <div className="text-3xl font-bold">{stats.totalBarbers}</div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Biểu đồ doanh thu */}
+              <div className="bg-white p-6 rounded-xl shadow-sm">
+                <h3 className="font-bold mb-4">Biểu đồ Doanh thu (VNĐ)</h3>
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="name" fontSize={12} tickMargin={10} />
+                      <YAxis fontSize={12} tickFormatter={(value) => `${value/1000}k`} />
+                      <Tooltip formatter={(value) => formatPrice(value)} />
+                      <Area type="monotone" dataKey="revenue" stroke="#10b981" fill="#d1fae5" strokeWidth={3} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Biểu đồ lượng booking */}
+              <div className="bg-white p-6 rounded-xl shadow-sm">
+                <h3 className="font-bold mb-4">Lượng đặt lịch theo ngày</h3>
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="name" fontSize={12} tickMargin={10} />
+                      <YAxis fontSize={12} />
+                      <Tooltip />
+                      <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -439,7 +542,7 @@ export default function Admin() {
                 <tr>
                   <th className="p-4 font-bold">Tài khoản</th>
                   <th className="p-4 font-bold">Vai trò</th>
-                  <th className="p-4 font-bold">Hành động</th>
+                  <th className="p-4 font-bold">Trạng thái & Hành động</th>
                   <th className="p-4 font-bold">ID</th>
                 </tr>
               </thead>
@@ -464,6 +567,13 @@ export default function Admin() {
                         <option value="barber">Barber</option>
                         <option value="admin">Admin</option>
                       </select>
+                      <button 
+                        onClick={() => toggleBlockUser(u._id, u.isBlocked)}
+                        className={`text-xs px-2 py-1 rounded font-bold ${u.isBlocked ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                        title={u.isBlocked ? "Bỏ chặn" : "Chặn người dùng"}
+                      >
+                        {u.isBlocked ? <i className="fas fa-lock"></i> : <i className="fas fa-lock-open"></i>}
+                      </button>
                       <button onClick={() => deleteUser(u._id)} className="text-red-500 hover:text-red-700">
                         <i className="fas fa-user-slash"></i>
                       </button>
@@ -586,6 +696,16 @@ export default function Admin() {
           </div>
         )}
       </main>
+
+      {/* CONFIRMATION DIALOG */}
+      <ConfirmDialog
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ ...confirmModal, open: false })}
+        type="danger"
+      />
       </div>
   );
 }

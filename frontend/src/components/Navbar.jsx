@@ -99,7 +99,7 @@ function MobileNav({
                   Lịch của tôi
                 </Link>
 
-                {username === "admin" && (
+                {role === "admin" && (
                   <Link
                     to="/admin"
                     onClick={() => setOpen(false)}
@@ -239,7 +239,7 @@ export default function Navbar() {
 
         {token ? (
           <div className="flex items-center gap-3">
-            {username === "admin" && (
+            {role === "admin" && (
               <Link
                 to="/admin"
                 className="text-yellow-600 hover:text-yellow-700 font-semibold"
