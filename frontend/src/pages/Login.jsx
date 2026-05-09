@@ -24,6 +24,11 @@ export default function Login() {
       console.log("Dữ liệu đăng nhập:", res.data);
 
       const token = res.data.access_token || res.data.token;
+      if (!token) {
+        setError("Không nhận được mã xác thực hợp lệ từ máy chủ.");
+        return;
+      }
+
       localStorage.setItem("token", token);
       localStorage.setItem("username", res.data.username || username);
       localStorage.setItem("role", res.data.role || "user");

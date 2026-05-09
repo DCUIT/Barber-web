@@ -42,6 +42,15 @@ export default function BarberDashboard() {
     [token]
   );
 
+  const handleAuthError = useCallback((e) => {
+    if (e?.response?.status === 401 || e?.response?.data?.msg === "Invalid token") {
+      localStorage.removeItem("token");
+      window.dispatchEvent(new Event("auth-change"));
+      navigate("/login");
+      toast.error("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
+    }
+  }, [navigate]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [socketConnected, setSocketConnected] = useState(false);
@@ -59,12 +68,13 @@ export default function BarberDashboard() {
       const res = await API.get(`/barber/bookings/today?date=${encodeURIComponent(date)}`, authHeader);
       setTodayBookings(res.data?.bookings || []);
     } catch (e) {
+      handleAuthError(e);
       setError(e?.response?.data?.msg || "Không thể tải lịch hôm nay");
       setTodayBookings([]);
     } finally {
       setLoading(false);
     }
-  }, [authHeader, token, todayStr]);
+  }, [authHeader, token, todayStr, handleAuthError]);
 
   const fetchWeek = useCallback(async () => {
     if (!token) return;
@@ -81,13 +91,14 @@ export default function BarberDashboard() {
       for (const d of days) map[d.date] = d.bookings || [];
       setWeekBookingsByDate(map);
     } catch (e) {
+      handleAuthError(e);
       setError(e?.response?.data?.msg || "Không thể tải lịch tuần");
       setWeekDays([]);
       setWeekBookingsByDate({});
     } finally {
       setLoading(false);
     }
-  }, [authHeader, token, weekStart]);
+  }, [authHeader, token, weekStart, handleAuthError]);
 
   const updateStatus = useCallback(async (bookingId, newStatus) => {
     try {
@@ -97,9 +108,10 @@ export default function BarberDashboard() {
       if (tab === "today") fetchToday();
       if (tab === "week") fetchWeek();
     } catch (e) {
+      handleAuthError(e);
       toast.error(e?.response?.data?.msg || "Cập nhật thất bại");
     }
-  }, [authHeader, token, weekStart]);
+  }, [authHeader, tab, fetchToday, fetchWeek, handleAuthError]);
 
   useEffect(() => {
     if (!token) {
