@@ -26,10 +26,10 @@ const BarberSchema = new mongoose.Schema(
       }
     },
 
-    rating: { type: Number, default: 0, min: 0, max: 5 }
+    rating: { type: Number, default: 0, min: 0, max: 5 },
+    reviewCount: { type: Number, default: 0 }
   },
   { timestamps: true }
 );
 
 export const Barber = mongoose.model('Barber', BarberSchema);
-

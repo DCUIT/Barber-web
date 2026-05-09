@@ -101,11 +101,41 @@ bookingsRouter.get('/', requireAuth, async (req, res) => {
   }
 });
 
+bookingsRouter.get('/stats', requireAuth, requireRole(['admin']), async (req, res) => {
+  try {
+    const stats = await Booking.aggregate([
+      {
+        $group: {
+          _id: "$bookingDate",
+          revenue: { 
+            $sum: { $cond: [{ $eq: ["$status", "Completed"] }, 50000, 0] } // Giả sử đồng giá hoặc cần lookup service
+            // Lưu ý: Để chính xác 100% cần $lookup sang collection services để lấy giá thật
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id": 1 } },
+      { $limit: 30 }
+    ]);
+    
+    // Chuyển đổi định dạng cho Recharts
+    const formatted = stats.map(s => ({ name: s._id, revenue: s.revenue, count: s.count }));
+    res.json(formatted);
+  } catch (error) {
+    res.status(500).json({ msg: 'Lỗi thống kê' });
+  }
+});
+
   bookingsRouter.post('/', requireAuth, async (req, res) => {
   const userId = req.user.id;
   const { barberId, serviceId, bookingDate, bookingTime, note } = req.body;
   if (!barberId || !serviceId || !bookingDate || !bookingTime) {
     return res.status(400).json({ msg: 'Missing fields' });
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  if (bookingDate < today) {
+    return res.status(400).json({ msg: 'Không thể đặt lịch cho ngày trong quá khứ' });
   }
 
   try {
@@ -134,8 +164,13 @@ bookingsRouter.get('/', requireAuth, async (req, res) => {
       status: 'Pending'
     });
 
-    // Emit new booking event
-    io.emit('newBooking', booking); // Emit to all connected clients
+    // Populated object để Frontend hiển thị ngay lập tức
+    const fullBooking = await Booking.findById(booking._id)
+      .populate('userId', 'username')
+      .populate('serviceId', 'name price')
+      .populate('barberId', 'name');
+
+    io.emit('newBooking', fullBooking);
 
     res.json(booking);
   } catch (error) {

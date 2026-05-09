@@ -47,8 +47,9 @@ reviewsRouter.post('/', requireAuth, async (req, res) => {
       { $group: { _id: '$barberId', avgRating: { $avg: '$rating' }, count: { $sum: 1 } } }
     ]);
 
-    const avgRating = agg[0]?.avgRating ?? 0;
-    await Barber.findByIdAndUpdate(booking.barberId, { rating: avgRating });
+    const avgRating = agg.length > 0 ? agg[0].avgRating : cleanRating;
+    const reviewCount = agg.length > 0 ? agg[0].count : 1;
+    await Barber.findByIdAndUpdate(booking.barberId, { rating: avgRating, reviewCount });
 
     return res.json({ msg: 'Review created', review });
   } catch (e) {
@@ -72,4 +73,3 @@ reviewsRouter.get('/barbers/:barberId', async (req, res) => {
     return res.status(500).json({ msg: 'Server error fetching reviews' });
   }
 });
-

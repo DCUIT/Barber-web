@@ -12,9 +12,9 @@ const UserSchema = new mongoose.Schema(
     },
     avatar: { type: String, default: '' },
     phone: { type: String, default: '' },
+    isBlocked: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
 export const User = mongoose.model('User', UserSchema);
-

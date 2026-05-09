@@ -55,6 +55,13 @@ authRouter.put('/users/:id/role', requireAuth, requireRole(['admin']), async (re
   res.json({ msg: 'Role updated' });
 });
 
+// Toggle Block user (Admin only)
+authRouter.put('/users/:id/block', requireAuth, requireRole(['admin']), async (req, res) => {
+  const { isBlocked } = req.body;
+  await User.findByIdAndUpdate(req.params.id, { isBlocked });
+  res.json({ msg: isBlocked ? 'User blocked' : 'User unblocked' });
+});
+
 // Delete user (Admin only)
 authRouter.delete('/users/:id', requireAuth, requireRole(['admin']), async (req, res) => {
   await User.findByIdAndDelete(req.params.id);

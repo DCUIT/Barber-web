@@ -48,28 +48,13 @@ export default function Admin() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10); // Số lượng mục trên mỗi trang
   const [totalBookingsCount, setTotalBookingsCount] = useState(0);
+  const [dashboardChartData, setDashboardChartData] = useState([]);
 
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const authHeader = useMemo(
     () => ({ headers: { Authorization: `Bearer ${token}` } }),
     [token]
   );
-
-  // Xử lý dữ liệu cho biểu đồ (Nhóm theo ngày)
-  const chartData = useMemo(() => {
-    const dataMap = {};
-    // Lấy dữ liệu từ bookings hiện có (lưu ý: nếu backend phân trang thì biểu đồ chỉ hiển thị dữ liệu trang đó)
-    // Trong thực tế, nên có 1 API riêng cho Analytics trả về data 7-30 ngày gần nhất.
-    bookings.forEach(b => {
-      const date = b.bookingDate;
-      if (!dataMap[date]) {
-        dataMap[date] = { name: date, revenue: 0, count: 0 };
-      }
-      dataMap[date].revenue += b.serviceId?.price || 0;
-      dataMap[date].count += 1;
-    });
-    return Object.values(dataMap).sort((a, b) => new Date(a.name) - new Date(b.name));
-  }, [bookings]);
 
   // Make fetchData a useCallback to prevent unnecessary re-renders and issues with socket.io useEffect
   const fetchData = useCallback(async () => {
@@ -389,7 +374,7 @@ export default function Admin() {
                 <h3 className="font-bold mb-4">Biểu đồ Doanh thu (VNĐ)</h3>
                 <div className="h-80 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
+                    <AreaChart data={dashboardChartData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="name" fontSize={12} tickMargin={10} />
                       <YAxis fontSize={12} tickFormatter={(value) => `${value/1000}k`} />
@@ -405,7 +390,7 @@ export default function Admin() {
                 <h3 className="font-bold mb-4">Lượng đặt lịch theo ngày</h3>
                 <div className="h-80 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData}>
+                    <BarChart data={dashboardChartData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="name" fontSize={12} tickMargin={10} />
                       <YAxis fontSize={12} />
