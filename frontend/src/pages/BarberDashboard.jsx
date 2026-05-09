@@ -134,7 +134,7 @@ export default function BarberDashboard() {
 
   // realtime: bookingUpdated/newBooking affects dashboard
   useEffect(() => {
-    const socket = io("http://localhost:4000");
+    const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:4000");
     socket.on("connect", () => {
       console.log("Connected (BarberDashboard)");
       setSocketConnected(true);

@@ -71,7 +71,7 @@ export default function BarberBookings() {
   }, [fetchBookingsForDate, user]); // Depend on user từ AuthContext
 
   useEffect(() => {
-    const socket = io("http://localhost:4000");
+    const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:4000");
     socket.on("bookingUpdated", () => {
       fetchBookingsForDate();
     });

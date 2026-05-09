@@ -50,7 +50,7 @@ export default function BarberHistory() {
 
   // Socket.io integration
   useEffect(() => {
-    const socket = io("http://localhost:4000"); // Connect to your backend socket server
+    const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:4000"); // Connect to your backend socket server
     socket.on('connect', () => console.log('Connected to Socket.io server from BarberHistory'));
     socket.on('bookingUpdated', (updatedBooking) => {
       console.log('Booking updated (BarberHistory):', updatedBooking);

@@ -151,7 +151,7 @@ export default function Navbar() {
 
   // Realtime Notifications
   useEffect(() => {
-    const socket = io("http://localhost:4000");
+    const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:4000");
 
     socket.on("newBooking", (data) => {
       if (role === "admin" || role === "barber") {
