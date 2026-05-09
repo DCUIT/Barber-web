@@ -17,7 +17,14 @@ export default function Profile() {
     username: "",
     avatar: "",
     phone: "",
+
+    // barber fields
+    experienceYears: 0,
+    specialty: "",
+    workingHours: {},
+    dayOff: {},
   });
+
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -36,13 +43,33 @@ export default function Profile() {
     (async () => {
       setLoading(true);
       try {
-        const res = await API.get("/auth/me", authHeader);
+        const role = localStorage.getItem("role");
+
+        const userRes = await API.get("/auth/me", authHeader);
         if (cancelled) return;
-        setProfile({
-          username: res.data?.username || "",
-          avatar: res.data?.avatar || "",
-          phone: res.data?.phone || "",
-        });
+
+        if (role === "barber") {
+          const barberRes = await API.get("/barber/me", authHeader);
+          if (cancelled) return;
+
+          setProfile((p) => ({
+            ...p,
+            username: userRes.data?.username || "",
+            avatar: barberRes.data?.avatar ?? userRes.data?.avatar ?? "",
+            phone: userRes.data?.phone || "",
+            experienceYears: barberRes.data?.experienceYears ?? 0,
+            specialty: barberRes.data?.specialty ?? "",
+            workingHours: barberRes.data?.workingHours ?? {},
+            dayOff: barberRes.data?.dayOff ?? {},
+          }));
+        } else {
+          setProfile((p) => ({
+            ...p,
+            username: userRes.data?.username || "",
+            avatar: userRes.data?.avatar || "",
+            phone: userRes.data?.phone || "",
+          }));
+        }
       } catch (e) {
         if (cancelled) return;
         toast.error(e?.response?.data?.msg || "Không thể tải profile");
@@ -56,20 +83,38 @@ export default function Profile() {
     };
   }, [authHeader, navigate, token]);
 
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     if (!token) return;
 
     setLoading(true);
     try {
-      await API.put(
-        "/auth/me",
-        {
-          avatar: profile.avatar || "",
-          phone: profile.phone || "",
-        },
-        authHeader
-      );
+      const role = localStorage.getItem("role");
+
+      if (role === "barber") {
+        await API.put(
+          "/barber/me",
+          {
+            avatar: profile.avatar || "",
+            experienceYears: profile.experienceYears ?? 0,
+            specialty: profile.specialty || "",
+            workingHours: profile.workingHours || {},
+            dayOff: profile.dayOff || {},
+          },
+          authHeader
+        );
+      } else {
+        await API.put(
+          "/auth/me",
+          {
+            avatar: profile.avatar || "",
+            phone: profile.phone || "",
+          },
+          authHeader
+        );
+      }
+
       toast.success("Cập nhật profile thành công");
     } catch (err) {
       toast.error(err?.response?.data?.msg || "Cập nhật thất bại");
@@ -111,7 +156,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-3xl mx-auto">
+          <div className="max-w-3xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-900 text-center mb-10">Profile</h1>
 
         <div className="grid gap-8 lg:grid-cols-2">
@@ -152,6 +197,100 @@ export default function Profile() {
                   placeholder="Số điện thoại"
                 />
               </div>
+
+              {localStorage.getItem("role") === "barber" && (
+                <div className="space-y-4 pt-3 border-t">
+                  <h3 className="text-lg font-bold">Barber profile</h3>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-gray-700">Experience (năm)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        className="w-full border p-2 rounded bg-white text-gray-900"
+                        value={profile.experienceYears ?? 0}
+                        onChange={(e) => setProfile((p) => ({ ...p, experienceYears: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-gray-700">Specialty</label>
+                      <input
+                        className="w-full border p-2 rounded bg-white text-gray-900"
+                        value={profile.specialty ?? ""}
+                        onChange={(e) => setProfile((p) => ({ ...p, specialty: e.target.value }))}
+                        placeholder="Ví dụ: Fade & Undercut"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="text-sm text-gray-600 font-semibold">Availability (workingHours + dayOff)</div>
+
+                    {/* working hours editor: simple single range per day */}
+                    {(['mon','tue','wed','thu','fri','sat','sun']).map((dayKey) => {
+                      const dayOff = Boolean(profile.dayOff?.[dayKey]);
+                      const range = (profile.workingHours?.[dayKey]?.[0]) || { start: '09:00', end: '17:00' };
+                      return (
+                        <div key={dayKey} className="grid grid-cols-1 sm:grid-cols-6 gap-2 items-center">
+                          <div className="capitalize font-bold text-sm text-gray-800">{dayKey}</div>
+
+                          <label className="flex items-center gap-2 text-sm sm:col-span-2">
+                            <input
+                              type="checkbox"
+                              checked={dayOff}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setProfile((p) => ({
+                                  ...p,
+                                  dayOff: { ...(p.dayOff || {}), [dayKey]: checked },
+                                  workingHours: checked
+                                    ? { ...(p.workingHours || {}), [dayKey]: [] }
+                                    : (p.workingHours || {}),
+                                }));
+                              }}
+                            />
+                            Nghỉ
+                          </label>
+
+                          <div className="sm:col-span-3 grid grid-cols-2 gap-2">
+                            <input
+                              type="time"
+                              disabled={dayOff}
+                              className="border p-2 rounded bg-white text-gray-900 disabled:opacity-50"
+                              value={range.start}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setProfile((p) => {
+                                  const wh = { ...(p.workingHours || {}) };
+                                  const cur = (wh[dayKey]?.[0]) || { start: '09:00', end: '17:00' };
+                                  wh[dayKey] = [{ start: val, end: cur.end }];
+                                  return { ...p, workingHours: wh };
+                                });
+                              }}
+                            />
+                            <input
+                              type="time"
+                              disabled={dayOff}
+                              className="border p-2 rounded bg-white text-gray-900 disabled:opacity-50"
+                              value={range.end}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setProfile((p) => {
+                                  const wh = { ...(p.workingHours || {}) };
+                                  const cur = (wh[dayKey]?.[0]) || { start: '09:00', end: '17:00' };
+                                  wh[dayKey] = [{ start: cur.start, end: val }];
+                                  return { ...p, workingHours: wh };
+                                });
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"

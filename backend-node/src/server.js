@@ -6,7 +6,12 @@ import { servicesRouter } from './routes/services.routes.js';
 import { uploadRouter } from './routes/upload.routes.js';
 import { barbersRouter } from './routes/barbers.routes.js';
 import { createBookingsRouter as bookingsRouter } from './routes/bookings.routes.js';
+import { barberRouter } from './routes/barber.routes.js';
+import { barberAvailabilityRouter } from './routes/barberAvailability.routes.js';
+import { barberBookingsRouter } from './routes/barberBookings.routes.js';
+
 import { seedDatabase } from './routes/seed.js';
+
 import { reviewsRouter } from './routes/reviews.routes.js';
 import { createServer } from 'http'; // Import http server
 import { Server } from 'socket.io'; // Import Socket.io Server
@@ -37,6 +42,10 @@ app.use('/barbers', barbersRouter);
 app.use('/upload', uploadRouter); // Thêm route upload ảnh
 app.use('/bookings', bookingsRouter(io)); // Pass io instance to bookingsRouter
 app.use('/reviews', reviewsRouter);
+app.use('/barber', barberRouter);
+app.use('/barber', barberAvailabilityRouter);
+app.use('/barber', barberBookingsRouter);
+
 
 
 const PORT = process.env.PORT || 4000;

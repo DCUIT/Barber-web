@@ -249,14 +249,25 @@ export default function Navbar() {
               </Link>
             )}
             {role === "barber" && (
-              <Link
-                to="/my-bookings"
-                className="text-blue-400 hover:text-blue-500 font-semibold"
-                title="Lịch làm việc"
-              >
-                <i className="fas fa-cut text-xl"></i>
-              </Link>
+              <>
+                <Link
+                  to="/barber-dashboard"
+                  className="text-blue-400 hover:text-blue-500 font-semibold"
+                  title="Dashboard"
+                >
+                  <i className="fas fa-calendar-check text-xl"></i>
+                </Link>
+              </>
             )}
+            
+            <Link
+              to="/profile"
+              className="text-gray-300 hover:text-white transition"
+              title="Hồ sơ cá nhân"
+            >
+              <i className="fas fa-user-circle text-xl"></i>
+            </Link>
+
             <span className="text-white font-semibold hidden sm:inline">{username}</span>
 
             <button
@@ -330,4 +341,3 @@ export default function Navbar() {
     </header>
   );
 }
-

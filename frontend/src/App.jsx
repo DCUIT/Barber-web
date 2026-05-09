@@ -12,6 +12,9 @@ import Success from "./pages/Success";
 
 import BarberHistory from "./pages/BarberHistory";
 import Profile from "./pages/Profile";
+import BarberDashboard from "./pages/BarberDashboard";
+import BarberBookings from "./pages/BarberBookings";
+
 
 export default function App() {
   return (
@@ -26,6 +29,9 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/booking" element={<Booking />} />
           <Route path="/my-bookings" element={<BarberHistory />} />
+          <Route path="/barber-dashboard" element={<BarberDashboard />} />
+          <Route path="/barber/bookings" element={<BarberBookings />} />
+
           <Route path="/success" element={<Success />} />
           <Route path="/profile" element={<Profile />} />
           {/* <Route path="/booking-pro" element={<BookingPro />} /> */} {/* Removed old booking page */}

@@ -1,4 +1,4 @@
-import express from 'express';
+  import express from 'express';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { Booking } from '../models/Booking.js';
 import { Service } from '../models/Service.js';
@@ -23,12 +23,16 @@ bookingsRouter.get('/calendar', requireAuth, async (req, res) => {
   const { barberId, date } = req.query;
   if (!barberId || !date) return res.status(400).json({ msg: 'Missing barberId/date' });
 
+
   // Simple: generate 30-minute slots between workingHours for weekday
   const barber = await Barber.findById(barberId);
   if (!barber) return res.status(404).json({ msg: 'Barber not found' });
 
   const weekday = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
-  const working = barber.workingHours?.[weekday] || [];
+  const dayOffMap = barber.dayOff || {};
+  const isOff = Boolean(dayOffMap[weekday]);
+  const working = isOff ? [] : (barber.workingHours?.[weekday] || []);
+
 
   const booked = await Booking.find({ barberId, bookingDate: date, status: { $in: ['Pending','Accepted'] } });
   const bookedTimes = new Set(booked.map(b => b.bookingTime));
@@ -76,7 +80,20 @@ bookingsRouter.get('/', requireAuth, async (req, res) => {
       return res.json({ bookings, totalCount });
     }
 
-    const mine = await Booking.find({ userId: req.user.id }).populate('barberId', 'name').populate('serviceId', 'name price').sort({ createdAt: -1 });
+    if (role === 'barber') {
+      // MVP: assume barber userId === barberId (may be adjusted if you link them differently)
+      const mineAsBarber = await Booking.find({ barberId: req.user.id })
+        .populate('barberId', 'name')
+        .populate('serviceId', 'name price')
+        .populate('userId', 'username')
+        .sort({ createdAt: -1 });
+      return res.json(mineAsBarber);
+    }
+
+    const mine = await Booking.find({ userId: req.user.id })
+      .populate('barberId', 'name')
+      .populate('serviceId', 'name price')
+      .sort({ createdAt: -1 });
     res.json(mine);
   } catch (error) {
     console.error("Error fetching bookings:", error);

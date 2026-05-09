@@ -50,3 +50,21 @@
 
 ## Testing
 - [x] Smoke test all flows end-to-end — *good to have (not formal testing)*
+
+## BARBER FEATURES
+- [x] Barber Dashboard: xem lịch hôm nay
+- [x] Barber Dashboard: xem lịch tuần
+- [x] Booking Management: Accept booking (Pending → Accepted)
+- [x] Booking Management: Reject booking (Pending → Cancelled)
+- [x] Booking Management: Complete booking (Accepted → Completed)
+
+- [x] Availability: set giờ làm việc (workingHours)
+- [x] Availability: set ngày nghỉ (day off)
+- [x] Profile: Avatar
+- [x] Profile: Experience
+- [x] Profile: Specialty
+- [x] Realtime: có booking mới realtime (toast/refresh khi `newBooking`)
+
+
+
+

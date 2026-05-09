@@ -6,11 +6,26 @@ const BarberSchema = new mongoose.Schema(
     avatar: { type: String, default: '' },
     experienceYears: { type: Number, default: 0, min: 0 },
     specialty: { type: String, default: '' },
+    // workingHours: { mon: [{start:"09:00", end:"17:00"}], ... }
     workingHours: {
-      // Example: { "mon": [{"start":"09:00","end":"17:00"}], ... }
       type: Object,
       default: {}
     },
+
+    // dayOff: { mon: true/false, tue: true/false, ... }
+    dayOff: {
+      type: Object,
+      default: {
+        mon: false,
+        tue: false,
+        wed: false,
+        thu: false,
+        fri: false,
+        sat: false,
+        sun: false
+      }
+    },
+
     rating: { type: Number, default: 0, min: 0, max: 5 }
   },
   { timestamps: true }

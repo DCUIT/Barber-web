@@ -1,14 +1,25 @@
-# TODO-NEXT
+# Next tasks
 
-## Backend-node: MongoDB dependency blocker
-- [x] Create backend-node skeleton (Express + Mongoose models + JWT roles)
-- [x] Implement endpoints: /auth, /services, /barbers, /bookings + /bookings/calendar
-- [x] Add seedDatabase() called on startup
-- [ ] Fix local dev environment: Start MongoDB (port 27017) or update MONGO_URL to reachable instance
-- [ ] Add a fallback option for MVP using in-memory or SQLite if MongoDB không chạy (chỉ nếu cần)
+## Step 1 — Backend APIs
+- [x] Inspect `Barber` model (workingHours/dayOff structure)
+- [x] Add barber-specific booking listing (today/week) endpoint (MVP)
+- [x] Add `barbers/me` endpoints for updating profile + availability
 
-## Frontend migration blocker
-- [ ] Update frontend/src/api.js baseURL to `http://127.0.0.1:4000`
-- [ ] Replace Food/Cart/Payment flow with Booking flow and new pages/components
 
+## Step 2 — Frontend Pages & Routing
+- [ ] Add `BarberDashboard.jsx` (today + week)
+- [x] Add/upgrade `BarberBookings.jsx` (accept/reject/complete)
+
+- [ ] Add navigation links for barber pages in `Navbar.jsx` / `App.jsx`
+
+## Step 3 — Realtime
+- [ ] Barber screens: listen `newBooking` and refresh / toast
+- [ ] Ensure cleanup of socket listeners
+
+## Step 4 — Profile / Availability UI
+- [ ] Update `Profile.jsx` for barber fields (avatar/experience/specialty)
+- [ ] Add availability UI for workingHours + day off
+
+## Step 5 — Test
+- [ ] Smoke test: login as barber, view today/week, manage bookings, set availability, realtime new booking
 
