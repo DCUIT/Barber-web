@@ -21,6 +21,8 @@ function renderStars(rating) {
 import API from "../api";
 import { useNavigate } from "react-router-dom";
 import "../style.css";
+import BarberReviewsModal from "./BarberReviewsModal";
+
 
 export default function Home() {
   const navigate = useNavigate();
@@ -28,6 +30,10 @@ export default function Home() {
   const [services, setServices] = useState([]);
   const [barbers, setBarbers] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [keyword, setKeyword] = useState("");
+  const [selectedBarber, setSelectedBarber] = useState(null);
+
 
   useEffect(() => {
     API.get("/services")
@@ -45,10 +51,37 @@ export default function Home() {
       .catch(() => setBarbers([]));
   }, []);
 
+  const filteredServices = services.filter((s) => {
+    const k = keyword.trim().toLowerCase();
+    if (!k) return true;
+    return (s.name || "").toLowerCase().includes(k) || (s.category || "").toLowerCase().includes(k);
+  });
+
+  const filteredBarbers = barbers.filter((b) => {
+    const k = keyword.trim().toLowerCase();
+    if (!k) return true;
+    return (
+      (b.name || "").toLowerCase().includes(k) ||
+      (b.specialty || "").toLowerCase().includes(k)
+    );
+  });
+
   return (
     <div className="home-wrapper">
+
+      {/* Search */}
+      <section style={{ padding: 24, textAlign: "center" }}>
+        <input
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          placeholder="Tìm barber/dịch vụ..."
+          style={{ width: "min(600px, 92%)", padding: 12, borderRadius: 10, border: "1px solid #ddd" }}
+        />
+      </section>
+
       {/* HERO */}
       <section className="hero">
+
         <div className="booking-container">
           <h2>TRẢI NGHIỆM CẮT TÓC CHUẨN MỰC</h2>
           <div className="booking-form">
@@ -106,8 +139,9 @@ export default function Home() {
           <div className="text-center">Đang tải...</div>
         ) : (
           <div className="grid-container text-black">
-            {barbers.slice(0, 3).map((b) => (
-              <div key={b._id} className="card">
+            {filteredBarbers.slice(0, 6).map((b) => (
+              <div key={b._id} className="card" style={{ cursor: "pointer" }}>
+
                 <img
                   src={b.avatar || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=500"}
                   alt={b.name}
@@ -116,6 +150,17 @@ export default function Home() {
                   <h4 className="font-bold">{b.name.toUpperCase()}</h4>
                   <p className="price">{b.specialty || "Barber"}</p>
                   <p className="duration">{renderStars(b.rating)} ({b.rating?.toFixed ? b.rating.toFixed(1) : b.rating})</p>
+                  <div style={{ marginTop: 10, display: "flex", justifyContent: "center" }}>
+                    <button
+                      type="button"
+                      className="btn-submit"
+                      style={{ width: "auto", padding: "8px 14px" }}
+                      onClick={() => setSelectedBarber(b)}
+                    >
+                      Xem reviews
+                    </button>
+                  </div>
+
                 </div>
               </div>
             ))}
@@ -123,8 +168,23 @@ export default function Home() {
         )}
       </section>
 
+      {/* Reviews modal */}
+      {selectedBarber ? (
+        <BarberReviewsModal
+          barber={selectedBarber}
+          onClose={() => setSelectedBarber(null)}
+          onSubmitted={() => {
+            // refresh avg ratings by re-fetching barbers
+            API.get("/barbers")
+              .then((res) => setBarbers(res.data || []))
+              .catch(() => {});
+          }}
+        />
+      ) : null}
+
       {/* SERVICES */}
       <section className="services">
+
         <h2>DỊCH VỤ CỦA CHÚNG TÔI</h2>
         {loading ? (
           <div className="text-center">Đang tải...</div>

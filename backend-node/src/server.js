@@ -7,8 +7,10 @@ import { uploadRouter } from './routes/upload.routes.js';
 import { barbersRouter } from './routes/barbers.routes.js';
 import { createBookingsRouter as bookingsRouter } from './routes/bookings.routes.js';
 import { seedDatabase } from './routes/seed.js';
+import { reviewsRouter } from './routes/reviews.routes.js';
 import { createServer } from 'http'; // Import http server
 import { Server } from 'socket.io'; // Import Socket.io Server
+
 
 
 dotenv.config();
@@ -34,6 +36,8 @@ app.use('/services', servicesRouter);
 app.use('/barbers', barbersRouter);
 app.use('/upload', uploadRouter); // Thêm route upload ảnh
 app.use('/bookings', bookingsRouter(io)); // Pass io instance to bookingsRouter
+app.use('/reviews', reviewsRouter);
+
 
 const PORT = process.env.PORT || 4000;
 
