@@ -187,7 +187,7 @@ export default function Booking() {
             <label>3. SELECT DATE & TIME</label>
             <input type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} />
 
-            <div className="time-slots" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "15px" }}>
+            <div className="time-slots" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: "10px", marginTop: "15px" }}>
               {availableSlots.length === 0 ? (
               <div className="text-gray-500 text-center py-2" style={{ gridColumn: "span 2" }}>
                   {loadingSlots ? "Đang tải khung giờ..." : "Không có khung giờ trống"}
