@@ -159,14 +159,26 @@ bookingsRouter.get('/stats', requireAuth, requireRole(['admin']), async (req, re
     const barber = await Barber.findById(barberId);
     if (!barber) return res.status(404).json({ msg: 'Barber not found' });
 
-    // Simple overlap rule: block exact start time (keeps logic simple for internship MVP)
+    // 1. Kiểm tra xem ngày đó Barber có làm việc không (Day off)
+    const weekday = new Date(bookingDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+    const isOff = barber.dayOff && barber.dayOff[weekday];
+    if (isOff) return res.status(400).json({ msg: 'Barber nghỉ vào ngày này' });
+
+    // 2. Kiểm tra xem giờ đặt có nằm trong giờ làm việc không
+    const workingRanges = barber.workingHours?.[weekday] || [];
+    const bookingMin = timeToMinutes(bookingTime);
+    const isInWorkingHours = workingRanges.some(range => {
+      return bookingMin >= timeToMinutes(range.start) && bookingMin < timeToMinutes(range.end);
+    });
+    if (!isInWorkingHours) return res.status(400).json({ msg: 'Giờ đặt nằm ngoài khung giờ làm việc' });
+
+    // 3. Kiểm tra trùng lịch (Overlap check)
     const conflict = await Booking.findOne({
       barberId,
       bookingDate,
       bookingTime,
-      status: { $in: ['Pending','Accepted'] }
+      status: { $in: ['Pending', 'Accepted'] }
     });
-
     if (conflict) return res.status(409).json({ msg: 'Time slot already booked' });
 
     const booking = await Booking.create({
