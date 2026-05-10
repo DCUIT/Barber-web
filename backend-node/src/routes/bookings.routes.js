@@ -105,26 +105,41 @@ bookingsRouter.get('/stats', requireAuth, requireRole(['admin']), async (req, re
   try {
     const stats = await Booking.aggregate([
       {
+        $lookup: {
+          from: 'services',
+          localField: 'serviceId',
+          foreignField: '_id',
+          as: 'service'
+        }
+      },
+      { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+      {
         $group: {
-          _id: "$bookingDate",
-          revenue: { 
-            $sum: { $cond: [{ $eq: ["$status", "Completed"] }, 50000, 0] } // Giả sử đồng giá hoặc cần lookup service
-            // Lưu ý: Để chính xác 100% cần $lookup sang collection services để lấy giá thật
+          _id: '$bookingDate',
+          revenue: {
+            $sum: {
+              $cond: [
+                { $eq: ['$status', 'Completed'] },
+                { $ifNull: ['$service.price', 0] },
+                0
+              ]
+            }
           },
           count: { $sum: 1 }
         }
       },
-      { $sort: { "_id": 1 } },
+      { $sort: { _id: 1 } },
       { $limit: 30 }
     ]);
-    
-    // Chuyển đổi định dạng cho Recharts
-    const formatted = stats.map(s => ({ name: s._id, revenue: s.revenue, count: s.count }));
+
+    const formatted = stats.map(s => ({ name: s._id, revenue: s.revenue || 0, count: s.count || 0 }));
     res.json(formatted);
   } catch (error) {
+    console.error('Error getting stats', error);
     res.status(500).json({ msg: 'Lỗi thống kê' });
   }
 });
+
 
   bookingsRouter.post('/', requireAuth, async (req, res) => {
   const userId = req.user.id;

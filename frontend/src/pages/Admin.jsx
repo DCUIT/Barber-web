@@ -62,20 +62,29 @@ export default function Admin() {
     setLoading(true);
     try {
       if (activeTab === TABS.DASHBOARD) {
-        // Lấy 100 booking gần nhất để vẽ biểu đồ (thay vì chỉ 10 như mặc định)
-        const res = await API.get("/bookings?limit=100");
-        const barbersRes = await API.get("/barbers");
-        const usersRes = await API.get("/auth/users");
+        // Stats tổng quan + analytics chart
+        const [bookingsRes, barbersRes, usersRes, statsRes] = await Promise.all([
+          API.get("/bookings?limit=100"),
+          API.get("/barbers"),
+          API.get("/auth/users"),
+          API.get("/bookings/stats")
+        ]);
 
-        const allBookings = res.data.bookings || res.data; // Hỗ trợ cả 2 cấu trúc
+        const allBookings = bookingsRes.data.bookings || bookingsRes.data; // Hỗ trợ cả 2 cấu trúc
         setBookings(Array.isArray(allBookings) ? allBookings : []);
         setStats({
-          totalBookings: res.data.totalCount || allBookings.length,
-          totalRevenue: Array.isArray(allBookings) ? allBookings.reduce((acc, curr) => acc + (curr.serviceId?.price || 0), 0) : 0,
+          totalBookings: bookingsRes.data.totalCount || allBookings.length,
+          // Chỉ tính doanh thu từ các lịch hẹn đã hoàn thành (Completed)
+          totalRevenue: Array.isArray(dashboardChartData)
+            ? dashboardChartData.reduce((acc, curr) => acc + (curr.revenue || 0), 0)
+            : 0,
           totalBarbers: barbersRes.data.length,
           totalUsers: usersRes.data.length
         });
+
+        setDashboardChartData(Array.isArray(statsRes.data) ? statsRes.data : []);
       }
+
       if (activeTab === TABS.SERVICES) {
         const res = await API.get("/services");
         setServices(res.data);
@@ -118,19 +127,49 @@ export default function Admin() {
     document.title = `${TAB_LABELS[activeTab]} | The Cutting Edge Admin`;
   }, [activeTab]);
 
+  // Notification center (realtime)
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   // Socket.io integration
   const { socket } = useSocket();
   useEffect(() => {
     if (!socket) return;
 
     const handleNewBooking = (newBooking) => {
-      toast.success(`Khách ${newBooking.userId?.username || 'mới'} vừa đặt lịch!`, { duration: 5000 });
+      const message = `Khách ${newBooking.userId?.username || 'mới'} vừa đặt lịch!`;
+
+      setNotifications((prev) => [
+        {
+          id: String(Date.now()) + String(Math.random()),
+          title: 'New booking',
+          message,
+          createdAt: new Date().toISOString()
+        },
+        ...prev
+      ].slice(0, 50));
+
+      setUnreadCount((c) => c + 1);
+      toast.success(message, { duration: 5000 });
+
       if (activeTab === TABS.BOOKINGS || activeTab === TABS.DASHBOARD) {
         fetchData();
       }
     };
 
     const handleBookingUpdated = () => {
+      setNotifications((prev) => [
+        {
+          id: String(Date.now()) + String(Math.random()),
+          title: 'Booking updated',
+          message: 'Trạng thái lịch hẹn đã được cập nhật.',
+          createdAt: new Date().toISOString()
+        },
+        ...prev
+      ].slice(0, 50));
+
+      setUnreadCount((c) => c + 1);
+
       if (activeTab === TABS.BOOKINGS || activeTab === TABS.DASHBOARD) {
         fetchData();
       }
@@ -144,6 +183,7 @@ export default function Admin() {
       socket.off('bookingUpdated', handleBookingUpdated);
     };
   }, [activeTab, fetchData, socket]);
+
 
   const updateBookingStatus = async (id, status) => {
     try {
@@ -216,7 +256,12 @@ export default function Admin() {
     e.preventDefault();
     setLoading(true);
     try {
-      const data = { ...serviceForm, price: Number(serviceForm.price), durationMinutes: Number(serviceForm.durationMinutes) };
+      const data = { 
+        ...serviceForm, 
+        price: Number(serviceForm.price) || 0, 
+        durationMinutes: Number(serviceForm.durationMinutes) || 0 
+      };
+
       if (editingId) {
         await API.put(`/services/${editingId}`, data);
         toast.success("Cập nhật dịch vụ thành công");
@@ -337,8 +382,48 @@ export default function Admin() {
       <main className="flex-1 p-8 text-gray-800">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold text-gray-800">{TAB_LABELS[activeTab]}</h2>
-          <div className="text-gray-600 font-medium">Chào mừng, Quản trị viên</div>
+          <div className="flex items-center gap-4">
+            <div className="text-gray-600 font-medium">Chào mừng, Quản trị viên</div>
+
+            {/* Notification Center */}
+            <div className="relative">
+              <button
+                type="button"
+                className="bg-white border rounded-lg px-3 py-2 shadow-sm hover:bg-gray-50 font-bold"
+                onClick={() => setUnreadCount(0)}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <i className="fas fa-bell"></i>
+                  <span>Thông báo</span>
+                  {unreadCount > 0 && (
+                    <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">
+                      {unreadCount}
+                    </span>
+                  )}
+                </span>
+              </button>
+
+              {notifications.length > 0 && (
+                <div className="absolute right-0 mt-2 w-[360px] bg-white border rounded-xl shadow-lg overflow-hidden z-10">
+                  <div className="p-3 border-b">
+                    <div className="font-bold">Realtime notifications</div>
+                    <div className="text-xs text-gray-500">Mới nhất trước</div>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto">
+                    {notifications.map((n) => (
+                      <div key={n.id} className="p-3 border-b last:border-b-0 hover:bg-gray-50">
+                        <div className="text-sm font-bold">{n.title}</div>
+                        <div className="text-sm text-gray-700">{n.message}</div>
+                        <div className="text-xs text-gray-400">{new Date(n.createdAt).toLocaleString()}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
+
 
         {/* DASHBOARD TAB */}
         {activeTab === TABS.DASHBOARD && stats && (
