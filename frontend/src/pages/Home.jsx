@@ -199,7 +199,7 @@ export default function Home() {
                 <div className="card-info">
                   <h4 className="font-bold">{s.name.toUpperCase()}</h4>
                   <p className="price">{new Intl.NumberFormat("vi-VN").format(s.price)}đ</p>
-                  <p className="duration">{s.durationMinutes ? `${s.durationMinutes} phút` : "—"}</p>
+                  <p className="duration">{s.duration ? `${s.duration} phút` : "—"}</p>
                 </div>
               </div>
             ))}

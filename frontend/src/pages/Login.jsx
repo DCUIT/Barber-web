@@ -32,7 +32,7 @@ export default function Login() {
 
       login({
         token,
-        username: res.data.username || data.username,
+        name: res.data.name || data.name,
         role: res.data.role || "user"
       });
 
@@ -125,7 +125,15 @@ export default function Login() {
           /* Form đăng ký */
           <form onSubmit={handleSubmit(onRegister)}>
             <div className="mb-4">
-              <label className="block mb-1">Tài khoản</label>
+              <label className="block mb-1">Họ tên</label>
+              <input
+                className={`w-full px-3 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded bg-white text-black focus:border-blue-500 outline-none`}
+                {...register("name", { required: "Họ tên là bắt buộc" })}
+              />
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+            </div>
+            <div className="mb-4">
+              <label className="block mb-1">Tên đăng nhập (Username)</label>
               <input
                 className={`w-full px-3 py-2 border ${errors.username ? 'border-red-500' : 'border-gray-300'} rounded bg-white text-black focus:border-blue-500 outline-none`}
                 {...register("username", { required: "Tên đăng nhập là bắt buộc" })}

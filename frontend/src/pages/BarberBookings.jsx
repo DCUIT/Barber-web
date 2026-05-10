@@ -129,7 +129,7 @@ export default function BarberBookings() {
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                   <div>
                     <div className="font-bold text-lg">{b.bookingTime}</div>
-                    <div className="text-sm text-gray-600">Khách: {b.userId?.username || "Guest"}</div>
+                    <div className="text-sm text-gray-600">Khách: {b.userId?.name || "Guest"}</div>
                     <div className="text-sm text-gray-600">Dịch vụ: {b.serviceId?.name || b.serviceId}</div>
                     {b.note ? <div className="text-xs text-gray-500 mt-1">Note: {b.note}</div> : null}
                   </div>

@@ -26,8 +26,8 @@ export default function Admin() {
   const [stats, setStats] = useState(null);
 
   // Form states cho Dịch vụ & Barber
-  const [serviceForm, setServiceForm] = useState({ name: "", price: "", durationMinutes: "", image: "", description: "" });
-  const [barberForm, setBarberForm] = useState({ name: "", specialty: "", experienceYears: "", avatar: "" });
+  const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration: "", image: "", description: "" });
+  const [barberForm, setBarberForm] = useState({ name: "", specialty: "", experience: "", avatar: "" });
   const [uploadingImage, setUploadingImage] = useState(false); // State để quản lý trạng thái upload ảnh
   
   const [editingId, setEditingId] = useState(null);
@@ -137,7 +137,7 @@ export default function Admin() {
     if (!socket) return;
 
     const handleNewBooking = (newBooking) => {
-      const message = `Khách ${newBooking.userId?.username || 'mới'} vừa đặt lịch!`;
+      const message = `Khách ${newBooking.userId?.name || 'mới'} vừa đặt lịch!`;
 
       setNotifications((prev) => [
         {
@@ -259,7 +259,7 @@ export default function Admin() {
       const data = { 
         ...serviceForm, 
         price: Number(serviceForm.price) || 0, 
-        durationMinutes: Number(serviceForm.durationMinutes) || 0 
+        duration: Number(serviceForm.duration) || 0 
       };
 
       if (editingId) {
@@ -271,7 +271,7 @@ export default function Admin() {
         toast.success("Thêm dịch vụ thành công");
       }
       // Reset form và editingId sau khi submit
-      setServiceForm({ name: "", price: "", durationMinutes: "", image: "", description: "" });
+      setServiceForm({ name: "", price: "", duration: "", image: "", description: "" });
       setEditingId(null);
       fetchData();
     } catch (err) { 
@@ -320,7 +320,7 @@ export default function Admin() {
     e.preventDefault();
     setLoading(true);
     try {
-      const data = { ...barberForm, experienceYears: Number(barberForm.experienceYears) };
+      const data = { ...barberForm, experience: Number(barberForm.experience) };
       if (editingId) {
         await API.put(`/barbers/${editingId}`, data);
         toast.success("Cập nhật Barber thành công");
@@ -329,7 +329,7 @@ export default function Admin() {
         toast.success("Thêm Barber thành công");
       }
       // Reset form và editingId sau khi submit
-      setBarberForm({ name: "", specialty: "", experienceYears: "", avatar: "" });
+      setBarberForm({ name: "", specialty: "", experience: "", avatar: "" });
       setEditingId(null);
       fetchData();
     } catch (err) { toast.error("Lỗi xử lý Barber"); }
@@ -541,7 +541,7 @@ export default function Admin() {
               <tbody>
                 {(bookings || []).map((b) => (
                   <tr key={b._id} className="border-b hover:bg-gray-50 transition">
-                    <td className="p-4">{b.userId?.username || "Guest"}</td>
+                    <td className="p-4">{b.userId?.name || "Guest"}</td>
                     <td className="p-4">{b.serviceId?.name}</td>
                     <td className="p-4">{b.barberId?.name}</td>
                     <td className="p-4 text-sm">
@@ -613,7 +613,7 @@ export default function Admin() {
               <tbody>
                 {users.map((u) => (
                   <tr key={u._id} className="border-b hover:bg-gray-50 transition">
-                    <td className="p-4 font-medium">{u.username}</td>
+                    <td className="p-4 font-medium">{u.name}</td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded text-xs font-bold ${
                         u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
@@ -658,7 +658,7 @@ export default function Admin() {
               <form onSubmit={handleServiceSubmit} className="space-y-3">
                 <input placeholder="Tên dịch vụ" className="w-full border p-2 rounded" value={serviceForm.name} onChange={e => setServiceForm({...serviceForm, name: e.target.value})} required />
                 <input placeholder="Giá (VNĐ)" type="number" className="w-full border p-2 rounded" value={serviceForm.price} onChange={e => setServiceForm({...serviceForm, price: e.target.value})} required />
-                <input placeholder="Thời gian (phút)" type="number" className="w-full border p-2 rounded" value={serviceForm.durationMinutes} onChange={e => setServiceForm({...serviceForm, durationMinutes: e.target.value})} required />
+                <input placeholder="Thời gian (phút)" type="number" className="w-full border p-2 rounded" value={serviceForm.duration} onChange={e => setServiceForm({...serviceForm, duration: e.target.value})} required />
                 <div className="flex items-center gap-2">
                   <input type="file" accept="image/*" className="flex-1 border p-2 rounded" onChange={async (e) => {
                     const imageUrl = await handleImageUpload(e.target.files[0], 'service');
@@ -671,7 +671,7 @@ export default function Admin() {
                 <textarea placeholder="Mô tả" className="w-full border p-2 rounded" value={serviceForm.description} onChange={e => setServiceForm({...serviceForm, description: e.target.value})} />
                 <div className="flex gap-2">
                   <button type="submit" className="flex-1 bg-black text-white p-2 rounded font-bold">Lưu</button>
-                  {editingId && <button type="button" onClick={() => {setEditingId(null); setServiceForm({name:"",price:"",durationMinutes:"",image:"",description:""})}} className="bg-gray-200 p-2 rounded">Hủy</button>}
+                  {editingId && <button type="button" onClick={() => {setEditingId(null); setServiceForm({name:"",price:"",duration:"",image:"",description:""})}} className="bg-gray-200 p-2 rounded">Hủy</button>}
                 </div>
               </form>
             </div>
@@ -690,9 +690,9 @@ export default function Admin() {
                     <tr key={s._id} className="border-b">
                       <td className="p-4 font-bold">{s.name}</td>
                       <td className="p-4">{formatPrice(s.price)}</td>
-                      <td className="p-4">{s.durationMinutes}m</td>
+                      <td className="p-4">{s.duration}m</td>
                       <td className="p-4 text-right space-x-2">
-                        <button onClick={() => {setEditingId(s._id); setServiceForm({name:s.name, price:s.price, durationMinutes:s.durationMinutes, image:s.image||"", description:s.description||""})}} className="text-blue-600"><i className="fas fa-edit"></i></button>
+                        <button onClick={() => {setEditingId(s._id); setServiceForm({name:s.name, price:s.price, duration:s.duration, image:s.image||"", description:s.description||""})}} className="text-blue-600"><i className="fas fa-edit"></i></button>
                         <button onClick={() => deleteService(s._id)} className="text-red-600"><i className="fas fa-trash"></i></button>
                       </td>
                     </tr>
@@ -711,7 +711,7 @@ export default function Admin() {
               <form onSubmit={handleBarberSubmit} className="space-y-3">
                 <input placeholder="Tên Stylist" className="w-full border p-2 rounded" value={barberForm.name} onChange={e => setBarberForm({...barberForm, name: e.target.value})} required />
                 <input placeholder="Chuyên môn (ví dụ: Fade & Undercut)" className="w-full border p-2 rounded" value={barberForm.specialty} onChange={e => setBarberForm({...barberForm, specialty: e.target.value})} required />
-                <input placeholder="Kinh nghiệm (năm)" type="number" className="w-full border p-2 rounded" value={barberForm.experienceYears} onChange={e => setBarberForm({...barberForm, experienceYears: e.target.value})} required />
+                <input placeholder="Kinh nghiệm (năm)" type="number" className="w-full border p-2 rounded" value={barberForm.experience} onChange={e => setBarberForm({...barberForm, experience: e.target.value})} required />
                 <div className="flex items-center gap-2">
                   <input type="file" accept="image/*" className="flex-1 border p-2 rounded" onChange={async (e) => {
                     const avatarUrl = await handleImageUpload(e.target.files[0], 'barber');
@@ -723,7 +723,7 @@ export default function Admin() {
                 <input placeholder="Hoặc dán Link Avatar trực tiếp" className="w-full border p-2 rounded" value={barberForm.avatar} onChange={e => setBarberForm({...barberForm, avatar: e.target.value})} />
                 <div className="flex gap-2">
                   <button type="submit" className="flex-1 bg-black text-white p-2 rounded font-bold">Lưu</button>
-                  {editingId && <button type="button" onClick={() => {setEditingId(null); setBarberForm({name:"",specialty:"",experienceYears:"",avatar:""})}} className="bg-gray-200 p-2 rounded">Hủy</button>}
+                  {editingId && <button type="button" onClick={() => {setEditingId(null); setBarberForm({name:"",specialty:"",experience:"",avatar:""})}} className="bg-gray-200 p-2 rounded">Hủy</button>}
                 </div>
               </form>
             </div>
@@ -747,9 +747,9 @@ export default function Admin() {
                         <span className="font-bold">{b.name}</span>
                       </td>
                       <td className="p-4">{b.specialty}</td>
-                      <td className="p-4">{b.experienceYears} năm</td>
+                      <td className="p-4">{b.experience} năm</td>
                       <td className="p-4 text-right space-x-2">
-                        <button onClick={() => {setEditingId(b._id); setBarberForm({name:b.name, specialty:b.specialty, experienceYears:b.experienceYears, avatar:b.avatar||""})}} className="text-blue-600"><i className="fas fa-edit"></i></button>
+                        <button onClick={() => {setEditingId(b._id); setBarberForm({name:b.name, specialty:b.specialty, experience:b.experience, avatar:b.avatar||""})}} className="text-blue-600"><i className="fas fa-edit"></i></button>
                         <button onClick={() => deleteBarber(b._id)} className="text-red-600"><i className="fas fa-trash"></i></button>
                       </td>
                     </tr>

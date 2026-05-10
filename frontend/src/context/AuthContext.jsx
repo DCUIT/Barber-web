@@ -36,11 +36,11 @@ export function AuthProvider({ children }) {
     load();
   }, [token]);
 
-  const login = ({ token: nextToken, username, role, user: nextUser } = {}) => {
+  const login = ({ token: nextToken, name, role, user: nextUser } = {}) => {
     if (!nextToken) return;
     setToken(nextToken);
 
-    const profile = nextUser ?? { username, role };
+    const profile = nextUser ?? { name, role };
     setUser(profile);
 
     try {
@@ -75,4 +75,3 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
 }
-

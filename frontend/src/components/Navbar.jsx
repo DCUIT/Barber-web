@@ -8,7 +8,7 @@ import { useSocket } from "../context/SocketContext";
 function MobileNav({
   token,
   role,
-  username,
+  name,
   notifications,
   showNotif,
   setShowNotif,
@@ -144,7 +144,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { user, token, logout } = useAuth();
   const role = user?.role;
-  const username = user?.username;
+  const name = user?.name;
 
   const [notifications, setNotifications] = useState([]);
   const [showNotif, setShowNotif] = useState(false);
@@ -156,7 +156,7 @@ export default function Navbar() {
 
     const handleNewBooking = (data) => {
       if (role === "admin" || role === "barber") {
-        const msg = `Có lịch hẹn mới từ ${data.userId?.username || "khách hàng"}!`;
+        const msg = `Có lịch hẹn mới từ ${data.userId?.name || "khách hàng"}!`;
         toast.success(msg, { icon: "🔔" });
         setNotifications(prev => [{ id: Date.now(), title: "Lịch hẹn mới", message: msg, time: "Vừa xong" }, ...prev]);
       }
@@ -249,7 +249,7 @@ export default function Navbar() {
               <i className="fas fa-user-circle text-xl"></i>
             </Link>
 
-            <span className="text-white font-semibold hidden sm:inline">{username}</span>
+            <span className="text-white font-semibold hidden sm:inline">{name}</span>
 
             <button
               onClick={handleLogout}
@@ -311,7 +311,7 @@ export default function Navbar() {
         <MobileNav
           token={token}
           role={role}
-          username={username}
+          name={name}
           notifications={notifications}
           showNotif={showNotif}
           setShowNotif={setShowNotif}

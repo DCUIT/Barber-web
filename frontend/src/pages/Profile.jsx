@@ -15,12 +15,12 @@ export default function Profile() {
 
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState({
-    username: "",
+    name: "",
     avatar: "",
     phone: "",
 
     // barber fields
-    experienceYears: 0,
+    experience: 0,
     specialty: "",
     workingHours: {},
     dayOff: {},
@@ -53,10 +53,10 @@ export default function Profile() {
 
           setProfile((p) => ({
             ...p,
-            username: userRes.data?.username || "",
+            name: userRes.data?.name || "",
             avatar: barberRes.data?.avatar ?? userRes.data?.avatar ?? "",
             phone: userRes.data?.phone || "",
-            experienceYears: barberRes.data?.experienceYears ?? 0,
+            experience: barberRes.data?.experience ?? 0,
             specialty: barberRes.data?.specialty ?? "",
             workingHours: barberRes.data?.workingHours ?? {},
             dayOff: barberRes.data?.dayOff ?? {},
@@ -64,7 +64,7 @@ export default function Profile() {
         } else {
           setProfile((p) => ({
             ...p,
-            username: userRes.data?.username || "",
+            name: userRes.data?.name || "",
             avatar: userRes.data?.avatar || "",
             phone: userRes.data?.phone || "",
           }));
@@ -94,7 +94,7 @@ export default function Profile() {
           "/barber/me",
           {
             avatar: profile.avatar || "",
-            experienceYears: Number(profile.experienceYears) ?? 0,
+            experience: Number(profile.experience) ?? 0,
             specialty: profile.specialty || "",
             workingHours: profile.workingHours || {},
             dayOff: profile.dayOff || {},
@@ -169,8 +169,8 @@ export default function Profile() {
                   )}
                 </div>
                 <div>
-                  <div className="font-bold text-gray-900">{profile.username || ""}</div>
-                  <div className="text-sm text-gray-500">Username</div>
+                  <div className="font-bold text-gray-900">{profile.name || ""}</div>
+                  <div className="text-sm text-gray-500">Họ tên</div>
                 </div>
               </div>
 
@@ -205,8 +205,8 @@ export default function Profile() {
                         type="number"
                         min={0}
                         className="w-full border p-2 rounded bg-white text-gray-900"
-                        value={profile.experienceYears ?? 0}
-                        onChange={(e) => setProfile((p) => ({ ...p, experienceYears: e.target.value }))}
+                        value={profile.experience ?? 0}
+                        onChange={(e) => setProfile((p) => ({ ...p, experience: e.target.value }))}
                       />
                     </div>
                     <div className="space-y-2">
