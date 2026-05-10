@@ -1,9 +1,9 @@
 import { useEffect, useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
 import toast from "react-hot-toast";
 import DarkToggle from "./DarkToggle";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
 
 function MobileNav({
   token,
@@ -150,35 +150,34 @@ export default function Navbar() {
   const [showNotif, setShowNotif] = useState(false);
 
   // Realtime Notifications
+  const { socket } = useSocket();
   useEffect(() => {
-    const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:4000");
+    if (!socket) return;
 
-    socket.on("newBooking", (data) => {
+    const handleNewBooking = (data) => {
       if (role === "admin" || role === "barber") {
         const msg = `Có lịch hẹn mới từ ${data.userId?.username || "khách hàng"}!`;
         toast.success(msg, { icon: "🔔" });
-        setNotifications((prev) => [
-          { id: Date.now(), title: "Lịch hẹn mới", message: msg, time: "Vừa xong" },
-          ...prev,
-        ]);
+        setNotifications(prev => [{ id: Date.now(), title: "Lịch hẹn mới", message: msg, time: "Vừa xong" }, ...prev]);
       }
-    });
+    };
 
-    socket.on("bookingUpdated", (data) => {
+    const handleBookingUpdated = (data) => {
       if (role === "user") {
         const msg = `Lịch hẹn của bạn đã được cập nhật thành: ${data.status}`;
         toast.success(msg);
-        setNotifications((prev) => [
-          { id: Date.now(), title: "Cập nhật lịch hẹn", message: msg, time: "Vừa xong" },
-          ...prev,
-        ]);
+        setNotifications(prev => [{ id: Date.now(), title: "Cập nhật lịch hẹn", message: msg, time: "Vừa xong" }, ...prev]);
       }
-    });
+    };
+
+    socket.on("newBooking", handleNewBooking);
+    socket.on("bookingUpdated", handleBookingUpdated);
 
     return () => {
-      socket.disconnect();
+      socket.off("newBooking", handleNewBooking);
+      socket.off("bookingUpdated", handleBookingUpdated);
     };
-  }, [role]);
+  }, [role, socket]);
 
   const handleLogout = () => {
     logout();

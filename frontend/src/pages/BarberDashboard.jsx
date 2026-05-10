@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import API from "../api";
 import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
 import toast from "react-hot-toast";
 
 const STATUS_COLORS = {
@@ -52,7 +52,6 @@ export default function BarberDashboard() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [socketConnected, setSocketConnected] = useState(false);
 
   const [todayBookings, setTodayBookings] = useState([]);
   const [weekDays, setWeekDays] = useState([]); // [{date, weekday, slots}] + maybe bookings handled separately
@@ -133,26 +132,23 @@ export default function BarberDashboard() {
   }, [tab, fetchToday, fetchWeek]);
 
   // realtime: bookingUpdated/newBooking affects dashboard
+  const { socket } = useSocket();
   useEffect(() => {
-    const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:4000");
-    socket.on("connect", () => {
-      console.log("Connected (BarberDashboard)");
-      setSocketConnected(true);
-    });
-    socket.on("disconnect", () => setSocketConnected(false));
-
-    socket.on("newBooking", () => {
+    if (!socket) return;
+    
+    const handleRefresh = () => {
       if (tab === "today") fetchToday();
       if (tab === "week") fetchWeek();
-    });
+    };
 
-    socket.on("bookingUpdated", () => {
-      if (tab === "today") fetchToday();
-      if (tab === "week") fetchWeek();
-    });
+    socket.on("newBooking", handleRefresh);
+    socket.on("bookingUpdated", handleRefresh);
 
-    return () => socket.disconnect();
-  }, [fetchToday, fetchWeek, tab]);
+    return () => {
+      socket.off("newBooking", handleRefresh);
+      socket.off("bookingUpdated", handleRefresh);
+    };
+  }, [fetchToday, fetchWeek, tab, socket]);
 
 
   const weekDates = useMemo(() => {

@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import API from "../api";
 import { formatCurrency as formatPrice } from "../utils/formatPrice"; // Giả sử hàm này vẫn dùng được cho VNĐ
-import { io } from "socket.io-client"; // Import socket.io-client
 import toast from "react-hot-toast";
+import { useSocket } from "../context/SocketContext";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
 import { useAuth } from "../context/AuthContext";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -52,10 +52,6 @@ export default function Admin() {
   const [dashboardChartData, setDashboardChartData] = useState([]);
   
   const { token } = useAuth(); // Sử dụng AuthContext
-  const authHeader = useMemo(
-    () => ({ headers: { Authorization: `Bearer ${token}` } }),
-    [token]
-  );
 
   // Make fetchData a useCallback to prevent unnecessary re-renders and issues with socket.io useEffect
   const fetchData = useCallback(async () => {
@@ -67,9 +63,9 @@ export default function Admin() {
     try {
       if (activeTab === TABS.DASHBOARD) {
         // Lấy 100 booking gần nhất để vẽ biểu đồ (thay vì chỉ 10 như mặc định)
-        const res = await API.get("/bookings?limit=100", authHeader);
+        const res = await API.get("/bookings?limit=100");
         const barbersRes = await API.get("/barbers");
-        const usersRes = await API.get("/auth/users", authHeader);
+        const usersRes = await API.get("/auth/users");
 
         const allBookings = res.data.bookings || res.data; // Hỗ trợ cả 2 cấu trúc
         setBookings(Array.isArray(allBookings) ? allBookings : []);
@@ -94,7 +90,7 @@ export default function Admin() {
         if (filterBarberId) url += `barberId=${encodeURIComponent(filterBarberId)}&`;
         if (filterStatus) url += `status=${encodeURIComponent(filterStatus)}&`;
         
-        const res = await API.get(url, authHeader);
+        const res = await API.get(url);
         setBookings(res.data.bookings); // Giả định backend trả về { bookings: [], totalCount: X }
         setTotalBookingsCount(res.data.totalCount);
 
@@ -103,7 +99,7 @@ export default function Admin() {
         setBarbers(barbersRes.data || []);
       }
       if (activeTab === TABS.USERS) {
-        const res = await API.get("/auth/users", authHeader); // Giả định endpoint backend
+        const res = await API.get("/auth/users"); // Giả định endpoint backend
         setUsers(res.data || []);
       }
     } catch (err) {
@@ -111,7 +107,7 @@ export default function Admin() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, currentPage, itemsPerPage, searchTerm, filterBarberId, filterStatus, authHeader, token]);
+  }, [activeTab, currentPage, itemsPerPage, searchTerm, filterBarberId, filterStatus, token]);
 
   useEffect(() => {
     fetchData();
@@ -123,38 +119,35 @@ export default function Admin() {
   }, [activeTab]);
 
   // Socket.io integration
+  const { socket } = useSocket();
   useEffect(() => {
-    const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:4000"); // Connect to your backend socket server
+    if (!socket) return;
 
-    socket.on('connect', () => {
-      console.log('Connected to Socket.io server from Admin');
-    });
-
-    socket.on('newBooking', (newBooking) => {
+    const handleNewBooking = (newBooking) => {
       toast.success(`Khách ${newBooking.userId?.username || 'mới'} vừa đặt lịch!`, { duration: 5000 });
-      // Luôn refetch nếu ở Dashboard để cập nhật số lượng và doanh thu
       if (activeTab === TABS.BOOKINGS || activeTab === TABS.DASHBOARD) {
         fetchData();
       }
-    });
+    };
 
-    socket.on('bookingUpdated', (updatedBooking) => {
-      console.log('Booking updated:', updatedBooking);
-      if (activeTab === TABS.BOOKINGS) {
-        fetchData(); // Refetch data to update the list
+    const handleBookingUpdated = () => {
+      if (activeTab === TABS.BOOKINGS || activeTab === TABS.DASHBOARD) {
+        fetchData();
       }
-    });
+    };
 
-    socket.on('disconnect', () => {
-      console.log('Disconnected from Socket.io server from Admin');
-    });
+    socket.on('newBooking', handleNewBooking);
+    socket.on('bookingUpdated', handleBookingUpdated);
 
-    return () => { socket.disconnect(); }; // Clean up socket connection
-  }, [activeTab, fetchData]); // Depend on activeTab and fetchData
+    return () => {
+      socket.off('newBooking', handleNewBooking);
+      socket.off('bookingUpdated', handleBookingUpdated);
+    };
+  }, [activeTab, fetchData, socket]);
 
   const updateBookingStatus = async (id, status) => {
     try {
-      await API.put(`/bookings/${id}/status`, { status }, authHeader);
+      await API.put(`/bookings/${id}/status`, { status });
       toast.success("Cập nhật trạng thái thành công");
       fetchData();
     } catch (err) {
@@ -169,7 +162,7 @@ export default function Admin() {
       message: "Bạn có chắc muốn xóa lịch hẹn này?",
       onConfirm: async () => {
         try {
-          await API.delete(`/bookings/${id}`, authHeader);
+          await API.delete(`/bookings/${id}`);
           toast.success("Đã xóa lịch hẹn");
           fetchData();
         } catch (err) {
@@ -187,7 +180,7 @@ export default function Admin() {
       message: "Xóa người dùng này sẽ không thể hoàn tác. Tiếp tục?",
       onConfirm: async () => {
         try {
-          await API.delete(`/auth/users/${id}`, authHeader);
+          await API.delete(`/auth/users/${id}`);
           toast.success("Đã xóa người dùng");
           fetchData();
         } catch (err) {
@@ -200,7 +193,7 @@ export default function Admin() {
 
   const toggleBlockUser = async (id, currentStatus) => {
     try {
-      await API.put(`/auth/users/${id}/block`, { isBlocked: !currentStatus }, authHeader);
+      await API.put(`/auth/users/${id}/block`, { isBlocked: !currentStatus });
       toast.success(currentStatus ? "Đã bỏ chặn người dùng" : "Đã chặn người dùng");
       fetchData();
     } catch (err) {
@@ -210,7 +203,7 @@ export default function Admin() {
 
   const updateUserRole = async (id, newRole) => {
     try {
-      await API.put(`/auth/users/${id}/role`, { role: newRole }, authHeader);
+      await API.put(`/auth/users/${id}/role`, { role: newRole });
       toast.success("Đã cập nhật quyền hạn");
       fetchData();
     } catch (err) {
@@ -225,11 +218,11 @@ export default function Admin() {
     try {
       const data = { ...serviceForm, price: Number(serviceForm.price), durationMinutes: Number(serviceForm.durationMinutes) };
       if (editingId) {
-        await API.put(`/services/${editingId}`, data, authHeader);
+        await API.put(`/services/${editingId}`, data);
         toast.success("Cập nhật dịch vụ thành công");
       } else {
         const imageUrl = serviceForm.image; // Giả sử đã có URL từ upload hoặc nhập tay
-        await API.post("/services", { ...data, image: imageUrl }, authHeader);
+        await API.post("/services", { ...data, image: imageUrl });
         toast.success("Thêm dịch vụ thành công");
       }
       // Reset form và editingId sau khi submit
@@ -248,7 +241,7 @@ export default function Admin() {
       message: "Bạn có chắc muốn xóa dịch vụ này?",
       onConfirm: async () => {
         try {
-          await API.delete(`/services/${id}`, authHeader);
+          await API.delete(`/services/${id}`);
           toast.success("Đã xóa dịch vụ");
           fetchData();
         } catch (err) {
@@ -267,7 +260,7 @@ export default function Admin() {
       const formData = new FormData();
       formData.append('image', file);
       const res = await API.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       toast.success("Upload ảnh thành công!");
       return res.data.imageUrl;
@@ -284,10 +277,10 @@ export default function Admin() {
     try {
       const data = { ...barberForm, experienceYears: Number(barberForm.experienceYears) };
       if (editingId) {
-        await API.put(`/barbers/${editingId}`, data, authHeader);
+        await API.put(`/barbers/${editingId}`, data);
         toast.success("Cập nhật Barber thành công");
       } else {
-        await API.post("/barbers", { ...data, avatar: barberForm.avatar }, authHeader);
+        await API.post("/barbers", { ...data, avatar: barberForm.avatar });
         toast.success("Thêm Barber thành công");
       }
       // Reset form và editingId sau khi submit
@@ -305,7 +298,7 @@ export default function Admin() {
       message: "Bạn có chắc muốn xóa Stylist này?",
       onConfirm: async () => {
         try {
-          await API.delete(`/barbers/${id}`, authHeader);
+          await API.delete(`/barbers/${id}`);
           toast.success("Đã xóa Barber");
           fetchData();
         } catch (err) {

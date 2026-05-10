@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api";
-import { io } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
 
 const statusOptions = [
   { value: "Pending", label: "Pending" },
@@ -64,23 +64,19 @@ export default function BarberBookings() {
   }, [navigate, token]); // token từ AuthContext
 
   useEffect(() => {
-    if (tabNeedsGuard(user?.role)) { // Kiểm tra role từ AuthContext
-      // If you want to enforce role gate, redirect here.
-    }
     fetchBookingsForDate();
-  }, [fetchBookingsForDate, user]); // Depend on user từ AuthContext
-
-  useEffect(() => {
-    const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:4000");
-    socket.on("bookingUpdated", () => {
-      fetchBookingsForDate();
-    });
-    socket.on("newBooking", () => {
-      // newly created booking - refresh list
-      fetchBookingsForDate();
-    });
-    return () => socket.disconnect();
   }, [fetchBookingsForDate]);
+
+  const { socket } = useSocket();
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("bookingUpdated", fetchBookingsForDate);
+    socket.on("newBooking", fetchBookingsForDate);
+    return () => {
+      socket.off("bookingUpdated", fetchBookingsForDate);
+      socket.off("newBooking", fetchBookingsForDate);
+    };
+  }, [fetchBookingsForDate, socket]);
 
   const updateStatus = async (bookingId, status) => {
     try {

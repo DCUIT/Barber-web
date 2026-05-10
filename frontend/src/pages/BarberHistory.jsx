@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import API from "../api";
 import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client"; // Import socket.io-client
+import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
 
 const statusMap = {
@@ -49,16 +49,16 @@ export default function BarberHistory() {
   }, [fetchBookings]); // Depend on fetchBookings
 
   // Socket.io integration
+  const { socket } = useSocket();
   useEffect(() => {
-    const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:4000"); // Connect to your backend socket server
-    socket.on('connect', () => console.log('Connected to Socket.io server from BarberHistory'));
-    socket.on('bookingUpdated', (updatedBooking) => {
-      console.log('Booking updated (BarberHistory):', updatedBooking);
-      fetchBookings(); // Refetch bookings to update the list
-    });
-    socket.on('disconnect', () => console.log('Disconnected from Socket.io server from BarberHistory'));
-    return () => { socket.disconnect(); }; // Clean up socket connection
-  }, [fetchBookings]); // Depend on fetchBookings
+    if (!socket) return;
+    
+    socket.on('bookingUpdated', fetchBookings);
+    
+    return () => {
+      socket.off('bookingUpdated', fetchBookings);
+    };
+  }, [fetchBookings, socket]);
 
   if (loading) return <div className="py-12 text-center">Đang tải...</div>;
   return (
