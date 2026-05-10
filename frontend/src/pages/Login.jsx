@@ -104,9 +104,10 @@ export default function Login() {
                 {...register("password", { 
                   required: "Mật khẩu là bắt buộc",
                   minLength: {
-                    value: 6,
-                    message: "Mật khẩu phải ít nhất 6 ký tự"
+                    value: 1,
+                    message: "Mật khẩu phải nhập"
                   }
+
                 })}
               />
               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}

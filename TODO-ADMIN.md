@@ -1,6 +1,8 @@
-# Chặn API Admin ✅
-- [x] Thêm import functools.wraps
-- [x] Thêm admin_required decorator
-- [x] Apply @admin_required() cho add_food, delete_food, update_food, get_stats
-- [ ] Test 403 cho user thường  
-- [ ] Done
+# TODO-ADMIN
+
+- [ ] Rebuild/verify Admin features in backend-node (auth/roles, CRUD services & barbers, bookings management, users management, analytics, uploads)
+- [ ] Fix any missing frontend context files (AuthContext, SocketContext) and ensure routing works
+- [ ] Verify realtime admin notification events (socket.io)
+- [ ] Implement upload handling for service images and barber avatars
+- [ ] Run frontend + backend and validate admin dashboard flows
+

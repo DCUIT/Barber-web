@@ -1,14 +1,16 @@
-
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import App from "./routes/App";
+import App from "./App.jsx";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
+import { SocketProvider } from "./context/SocketContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <AuthProvider>
-      <App />
+      <SocketProvider>
+        <App />
+      </SocketProvider>
     </AuthProvider>
   </BrowserRouter>
 );
