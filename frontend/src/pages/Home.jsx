@@ -91,7 +91,7 @@ export default function Home() {
               <div className="form-group">
                 <label>1. CHỌN DỊCH VỤ</label>
                 <select required>
-                  <option value="">Cắt Tóc, Cạo Râu, Gội Đầu...</option>
+                  <option value="">Select a service...</option>
                   {services.map((s) => (
                     <option key={s._id} value={s._id}>
                       {s.name} - {new Intl.NumberFormat("vi-VN").format(s.price)}đ
@@ -104,7 +104,7 @@ export default function Home() {
               <div className="form-group">
                 <label>2. CHỌN BARBER</label>
                 <select required>
-                  <option value="">Nguyễn Nam, Trần Lâm, Lê Anh...</option>
+                  <option value="">Select staff...</option>
                   {barbers.map((b) => (
                     <option key={b._id} value={b._id}>
                       {b.name}
