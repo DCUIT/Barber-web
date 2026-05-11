@@ -134,7 +134,7 @@ export default function BarberReviewsModal({ barber, onClose, onSubmitted }) {
               {reviews.map((r) => (
                 <div key={r._id} className="border rounded-xl p-3">
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold">{r.userId?.name || "User"}</div>
+                    <div className="font-semibold">{r.userId?.name || r.userId?.username || "User"}</div>
                     <div>
                       <Stars rating={r.rating} />
                     </div>

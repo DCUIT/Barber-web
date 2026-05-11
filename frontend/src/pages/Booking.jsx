@@ -108,11 +108,6 @@ export default function Booking() {
     [services, selectedServiceId]
   );
 
-  const selectedBarber = useMemo(
-    () => barbers.find((b) => String(b._id) === String(selectedBarberId)),
-    [barbers, selectedBarberId]
-  );
-
   async function handleConfirm() {
     if (!selectedServiceId || !selectedBarberId || !bookingDate || !selectedTime) {
       toast.error("Please select service, staff, date and time.");

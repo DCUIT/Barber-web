@@ -63,7 +63,7 @@ reviewsRouter.get('/barbers/:barberId', async (req, res) => {
   try {
     const { barberId } = req.params;
     const reviews = await Review.find({ barberId })
-      .populate('userId', 'username avatar')
+      .populate('userId', 'name username avatar')
       .populate('bookingId', 'bookingDate bookingTime status')
       .sort({ createdAt: -1 });
 

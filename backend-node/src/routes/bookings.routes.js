@@ -1,4 +1,4 @@
-  import express from 'express';
+import express from 'express';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { Booking } from '../models/Booking.js';
 import { Service } from '../models/Service.js';
@@ -6,6 +6,7 @@ import { Barber } from '../models/Barber.js';
 import { User } from '../models/User.js';
 import Notification from '../models/notification.model.js';
 import { emitNotification } from '../services/notificationEmitter.js';
+import { findBarberForUser } from '../services/barberResolver.js';
 
 
 
@@ -74,7 +75,7 @@ bookingsRouter.get('/', requireAuth, async (req, res) => {
 
       const totalCount = await Booking.countDocuments(query);
       const bookings = await Booking.find(query)
-        .populate('userId', 'username')
+        .populate('userId', 'name username')
         .populate('barberId', 'name')
         .populate('serviceId', 'name price')
         .sort({ createdAt: -1 })
@@ -85,11 +86,13 @@ bookingsRouter.get('/', requireAuth, async (req, res) => {
     }
 
     if (role === 'barber') {
-      // MVP: assume barber userId === barberId (may be adjusted if you link them differently)
-      const mineAsBarber = await Booking.find({ barberId: req.user.id })
+      const barber = await findBarberForUser(req.user.id);
+      if (!barber) return res.status(404).json({ msg: 'Barber not found' });
+
+      const mineAsBarber = await Booking.find({ barberId: barber._id })
         .populate('barberId', 'name')
         .populate('serviceId', 'name price')
-        .populate('userId', 'username')
+        .populate('userId', 'name username')
         .sort({ createdAt: -1 });
       return res.json(mineAsBarber);
     }
@@ -197,7 +200,7 @@ bookingsRouter.get('/stats', requireAuth, requireRole(['admin']), async (req, re
 
     // Populated object để Frontend hiển thị ngay lập tức
     const fullBooking = await Booking.findById(booking._id)
-      .populate('userId', 'username')
+      .populate('userId', 'name username')
       .populate('serviceId', 'name price')
       .populate('barberId', 'name');
 
@@ -226,9 +229,9 @@ bookingsRouter.get('/stats', requireAuth, requireRole(['admin']), async (req, re
     }
 
     // Selected barber notification
-    if (barberId) {
+    if (barber.userId) {
       const barberNotif = await Notification.create({
-        receiverId: barberId,
+        receiverId: barber.userId,
         receiverRole: 'barber',
         title: 'New booking',
         message: `Bạn có lịch mới: ${fullBooking.bookingDate} ${fullBooking.bookingTime}`,
@@ -254,7 +257,13 @@ bookingsRouter.get('/stats', requireAuth, requireRole(['admin']), async (req, re
   const booking = await Booking.findById(req.params.id);
   if (!booking) return res.status(404).json({ msg: 'Not found' });
 
-  // barber can update status in a real app with permission checks; MVP allows admin/barber
+  if (req.user.role === 'barber') {
+    const barber = await findBarberForUser(req.user.id);
+    if (!barber || String(booking.barberId) !== String(barber._id)) {
+      return res.status(403).json({ msg: 'Forbidden' });
+    }
+  }
+
   const { status } = req.body;
   const valid = ['Pending','Accepted','Completed','Cancelled'];
   if (!valid.includes(status)) return res.status(400).json({ msg: 'Invalid status' });

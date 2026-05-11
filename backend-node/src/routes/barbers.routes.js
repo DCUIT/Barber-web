@@ -10,11 +10,12 @@ barbersRouter.get('/', async (req, res) => {
 });
 
 barbersRouter.post('/', requireAuth, requireRole(['admin']), async (req, res) => {
-  const { name, avatar, experienceYears, specialty, workingHours, rating } = req.body;
+  const { name, userId, avatar, experience, experienceYears, specialty, workingHours, rating } = req.body;
   const barber = await Barber.create({
     name,
+    userId: userId || null,
     avatar: avatar || '',
-    experienceYears: experienceYears || 0,
+    experienceYears: Number(experienceYears ?? experience) || 0,
     specialty: specialty || '',
     workingHours: workingHours || {},
     rating: rating || 0
@@ -23,18 +24,19 @@ barbersRouter.post('/', requireAuth, requireRole(['admin']), async (req, res) =>
 });
 
 barbersRouter.put('/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+  const update = {
+    name: req.body.name,
+    avatar: req.body.avatar,
+    experienceYears: Number(req.body.experienceYears ?? req.body.experience) || 0,
+    specialty: req.body.specialty,
+    workingHours: req.body.workingHours,
+    rating: req.body.rating
+  };
+  if (req.body.userId !== undefined) update.userId = req.body.userId || null;
+
   const barber = await Barber.findByIdAndUpdate(
     req.params.id,
-    {
-      $set: {
-        name: req.body.name,
-        avatar: req.body.avatar,
-        experienceYears: req.body.experienceYears,
-        specialty: req.body.specialty,
-        workingHours: req.body.workingHours,
-        rating: req.body.rating
-      }
-    },
+    { $set: update },
     { new: true }
   );
   res.json(barber);

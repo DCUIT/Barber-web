@@ -1,6 +1,6 @@
 import express from 'express';
 import { requireAuth, requireRole } from '../middleware/auth.js';
-import { Barber } from '../models/Barber.js';
+import { findBarberForUser } from '../services/barberResolver.js';
 
 const router = express.Router();
 
@@ -30,7 +30,7 @@ function normalizeDayOff(dayOff) {
 }
 
 router.get('/me', requireAuth, requireRole(['barber']), async (req, res) => {
-  const barber = await Barber.findById(req.user.id);
+  const barber = await findBarberForUser(req.user.id);
   if (!barber) return res.status(404).json({ msg: 'Barber not found' });
 
   res.json({
@@ -44,7 +44,7 @@ router.get('/me', requireAuth, requireRole(['barber']), async (req, res) => {
 });
 
 router.put('/me', requireAuth, requireRole(['barber']), async (req, res) => {
-  const barber = await Barber.findById(req.user.id);
+  const barber = await findBarberForUser(req.user.id);
   if (!barber) return res.status(404).json({ msg: 'Barber not found' });
 
   const { avatar, experienceYears, specialty, workingHours, dayOff } = req.body || {};

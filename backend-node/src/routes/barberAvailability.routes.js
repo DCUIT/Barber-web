@@ -1,6 +1,6 @@
 import express from 'express';
 import { requireAuth, requireRole } from '../middleware/auth.js';
-import { Barber } from '../models/Barber.js';
+import { findBarberForUser } from '../services/barberResolver.js';
 
 const router = express.Router();
 
@@ -37,7 +37,7 @@ router.get('/availability', requireAuth, requireRole(['barber']), async (req, re
     const start = req.query.start;
     if (!start) return res.status(400).json({ msg: 'Missing start' });
 
-    const barber = await Barber.findById(req.user.id);
+    const barber = await findBarberForUser(req.user.id);
     if (!barber) return res.status(404).json({ msg: 'Barber not found' });
 
     const dayOffMap = barber.dayOff || {};

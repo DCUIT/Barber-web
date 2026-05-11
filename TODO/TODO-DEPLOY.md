@@ -19,7 +19,7 @@ Deploy project online + có hướng dẫn chạy.
 
 # Database
 - [x] MongoDB Atlas (mục tiêu demo)
-- [ ] Cấu hình connect DB trong backend (nếu cần chỉnh)
+- [x] Cấu hình connect DB trong backend (nếu cần chỉnh)
 
 ---
 
@@ -31,11 +31,10 @@ Deploy project online + có hướng dẫn chạy.
 
 # README
 - [ ] Add screenshots
-- [ ] Add install guide
+- [x] Add install guide
 - [ ] Add deploy links
 
 ---
 
 # Done condition
 - Website online hoạt động
-

@@ -190,7 +190,7 @@ export default function Home() {
           <div className="text-center">Đang tải...</div>
         ) : (
           <div className="grid-container text-black"> {/* Ensure text is black on white cards */}
-            {services.slice(0, 3).map((s) => (
+            {filteredServices.slice(0, 3).map((s) => (
               <div key={s._id} className="card">
                   <img 
                   src={s.image || "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=500"} 

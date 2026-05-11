@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import API from "../api";
 import { formatCurrency as formatPrice } from "../utils/formatPrice"; // Giả sử hàm này vẫn dùng được cho VNĐ
 import toast from "react-hot-toast";
 import { useSocket } from "../context/SocketContext";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 import { useAuth } from "../context/AuthContext";
 import ConfirmDialog from "../components/ConfirmDialog";
 import notificationService from "../services/notificationService";
@@ -133,9 +133,6 @@ export default function Admin() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const notificationStateService = notificationService; // chỉ để rõ intent
-
-
   // Socket.io integration
   const { socket } = useSocket();
 
@@ -146,7 +143,7 @@ export default function Admin() {
         const { notifications: list, unreadCount: count } = await notificationService.getNotifications();
         setNotifications(list || []);
         setUnreadCount(count || 0);
-      } catch (e) {
+      } catch {
         // ignore (optional)
       }
     };
@@ -176,13 +173,13 @@ export default function Admin() {
 
   const markAllRead = async () => {
     try {
-      await (await import("../services/notificationService.js")).default.markAllAsRead();
+      await notificationService.markAllAsRead();
       setUnreadCount(0);
       // refresh list
-      const { notifications: list, unreadCount: count } = await (await import("../services/notificationService.js")).default.getNotifications();
+      const { notifications: list, unreadCount: count } = await notificationService.getNotifications();
       setNotifications(list || []);
       setUnreadCount(count || 0);
-    } catch (e) {
+    } catch {
       // ignore
     }
   };
@@ -196,7 +193,7 @@ export default function Admin() {
       toast.success("Cập nhật trạng thái thành công");
       fetchData();
     } catch (err) {
-      toast.error("Cập nhật thất bại");
+      toast.error(err?.response?.data?.msg || "Cập nhật thất bại");
     }
   };
 
@@ -211,7 +208,7 @@ export default function Admin() {
           toast.success("Đã xóa lịch hẹn");
           fetchData();
         } catch (err) {
-          toast.error("Xóa lịch hẹn thất bại");
+          toast.error(err?.response?.data?.msg || "Xóa lịch hẹn thất bại");
         }
         setConfirmModal(prev => ({ ...prev, open: false }));
       }
@@ -229,7 +226,7 @@ export default function Admin() {
           toast.success("Đã xóa người dùng");
           fetchData();
         } catch (err) {
-          toast.error("Xóa người dùng thất bại");
+          toast.error(err?.response?.data?.msg || "Xóa người dùng thất bại");
         }
         setConfirmModal(prev => ({ ...prev, open: false }));
       }
@@ -242,7 +239,7 @@ export default function Admin() {
       toast.success(currentStatus ? "Đã bỏ chặn người dùng" : "Đã chặn người dùng");
       fetchData();
     } catch (err) {
-      toast.error("Thao tác thất bại");
+      toast.error(err?.response?.data?.msg || "Thao tác thất bại");
     }
   };
 
@@ -252,7 +249,7 @@ export default function Admin() {
       toast.success("Đã cập nhật quyền hạn");
       fetchData();
     } catch (err) {
-      toast.error("Cập nhật quyền thất bại");
+      toast.error(err?.response?.data?.msg || "Cập nhật quyền thất bại");
     }
   };
 
@@ -280,7 +277,7 @@ export default function Admin() {
       setEditingId(null);
       fetchData();
     } catch (err) { 
-      toast.error("Lỗi xử lý dịch vụ"); 
+      toast.error(err?.response?.data?.msg || "Lỗi xử lý dịch vụ"); 
     } finally { setLoading(false); }
   };
 
@@ -295,7 +292,7 @@ export default function Admin() {
           toast.success("Đã xóa dịch vụ");
           fetchData();
         } catch (err) {
-          toast.error("Xóa thất bại");
+          toast.error(err?.response?.data?.msg || "Xóa thất bại");
         }
         setConfirmModal(prev => ({ ...prev, open: false }));
       }
@@ -303,7 +300,7 @@ export default function Admin() {
   };
 
   // Hàm xử lý upload ảnh lên Cloudinary
-  const handleImageUpload = async (file, type) => {
+  const handleImageUpload = async (file) => {
     if (!file) return;
     setUploadingImage(true);
     try {
@@ -315,7 +312,7 @@ export default function Admin() {
       toast.success("Upload ảnh thành công!");
       return res.data.imageUrl;
     } catch (err) {
-      toast.error("Upload ảnh thất bại!");
+      toast.error(err?.response?.data?.msg || "Upload ảnh thất bại!");
       return null;
     } finally { setUploadingImage(false); }
   };
@@ -337,7 +334,7 @@ export default function Admin() {
       setBarberForm({ name: "", specialty: "", experience: "", avatar: "" });
       setEditingId(null);
       fetchData();
-    } catch (err) { toast.error("Lỗi xử lý Barber"); }
+    } catch (err) { toast.error(err?.response?.data?.msg || "Lỗi xử lý Barber"); }
     finally { setLoading(false); }
   };
 
@@ -352,7 +349,7 @@ export default function Admin() {
           toast.success("Đã xóa Barber");
           fetchData();
         } catch (err) {
-          toast.error("Xóa thất bại");
+          toast.error(err?.response?.data?.msg || "Xóa thất bại");
         }
         setConfirmModal(prev => ({ ...prev, open: false }));
       }
@@ -428,6 +425,12 @@ export default function Admin() {
             </div>
           </div>
         </div>
+
+        {loading && (
+          <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
+            Đang tải dữ liệu...
+          </div>
+        )}
 
 
         {/* DASHBOARD TAB */}
@@ -546,7 +549,7 @@ export default function Admin() {
               <tbody>
                 {(bookings || []).map((b) => (
                   <tr key={b._id} className="border-b hover:bg-gray-50 transition">
-                    <td className="p-4">{b.userId?.name || "Guest"}</td>
+                    <td className="p-4">{b.userId?.name || b.userId?.username || "Guest"}</td>
                     <td className="p-4">{b.serviceId?.name}</td>
                     <td className="p-4">{b.barberId?.name}</td>
                     <td className="p-4 text-sm">
@@ -618,7 +621,7 @@ export default function Admin() {
               <tbody>
                 {users.map((u) => (
                   <tr key={u._id} className="border-b hover:bg-gray-50 transition">
-                    <td className="p-4 font-medium">{u.name}</td>
+                    <td className="p-4 font-medium">{u.name || u.username}</td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded text-xs font-bold ${
                         u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
@@ -752,9 +755,9 @@ export default function Admin() {
                         <span className="font-bold">{b.name}</span>
                       </td>
                       <td className="p-4">{b.specialty}</td>
-                      <td className="p-4">{b.experience} năm</td>
+                      <td className="p-4">{b.experienceYears ?? b.experience ?? 0} năm</td>
                       <td className="p-4 text-right space-x-2">
-                        <button onClick={() => {setEditingId(b._id); setBarberForm({name:b.name, specialty:b.specialty, experience:b.experience, avatar:b.avatar||""})}} className="text-blue-600"><i className="fas fa-edit"></i></button>
+                        <button onClick={() => {setEditingId(b._id); setBarberForm({name:b.name, specialty:b.specialty, experience:b.experienceYears ?? b.experience ?? 0, avatar:b.avatar||""})}} className="text-blue-600"><i className="fas fa-edit"></i></button>
                         <button onClick={() => deleteBarber(b._id)} className="text-red-600"><i className="fas fa-trash"></i></button>
                       </td>
                     </tr>

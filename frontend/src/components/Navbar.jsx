@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import DarkToggle from "./DarkToggle";
@@ -8,7 +8,6 @@ import { useSocket } from "../context/SocketContext";
 function MobileNav({
   token,
   role,
-  name,
   notifications,
   showNotif,
   setShowNotif,
@@ -156,7 +155,7 @@ export default function Navbar() {
 
     const handleNewBooking = (data) => {
       if (role === "admin" || role === "barber") {
-        const msg = `Có lịch hẹn mới từ ${data.userId?.name || "khách hàng"}!`;
+        const msg = `Có lịch hẹn mới từ ${data.userId?.name || data.userId?.username || "khách hàng"}!`;
         toast.success(msg, { icon: "🔔" });
         setNotifications(prev => [{ id: Date.now(), title: "Lịch hẹn mới", message: msg, time: "Vừa xong" }, ...prev]);
       }
@@ -311,7 +310,6 @@ export default function Navbar() {
         <MobileNav
           token={token}
           role={role}
-          name={name}
           notifications={notifications}
           showNotif={showNotif}
           setShowNotif={setShowNotif}

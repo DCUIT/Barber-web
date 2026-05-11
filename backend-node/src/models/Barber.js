@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const BarberSchema = new mongoose.Schema(
   {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
     name: { type: String, required: true, trim: true },
     avatar: { type: String, default: '' },
     experienceYears: { type: Number, default: 0, min: 0 },

@@ -34,7 +34,7 @@ export default function BarberDashboard() {
   const { user, token, logout } = useAuth(); // Sử dụng AuthContext
 
   const [tab, setTab] = useState("today"); // today | week
-  const [todayStr, setTodayStr] = useState(() => formatYYYYMMDD(new Date()));
+  const [todayStr] = useState(() => formatYYYYMMDD(new Date()));
   const [weekStart, setWeekStart] = useState(() => formatYYYYMMDD(new Date()));
 
   const authHeader = useMemo(
@@ -48,7 +48,7 @@ export default function BarberDashboard() {
       logout(); // Đảm bảo xóa token và user khỏi context
       toast.error("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
     }
-  }, [navigate]);
+  }, [navigate, logout]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -129,7 +129,7 @@ export default function BarberDashboard() {
       if (tab === "today") fetchToday();
       if (tab === "week") fetchWeek();
     }
-  }, [tab, fetchToday, fetchWeek]);
+  }, [tab, fetchToday, fetchWeek, token]);
 
   // realtime: bookingUpdated/newBooking affects dashboard
   const { socket } = useSocket();
@@ -217,7 +217,7 @@ export default function BarberDashboard() {
                         <span className="text-lg font-black">{b.bookingTime}</span>
                       </div>
                       <div>
-                        <div className="font-black text-gray-900 text-lg">{b.userId?.name || "Khách vãng lai"}</div>
+                        <div className="font-black text-gray-900 text-lg">{b.userId?.name || b.userId?.username || "Khách vãng lai"}</div>
                         <div className="text-blue-600 font-bold text-sm uppercase">{b.serviceId?.name || "Dịch vụ"}</div>
                         {b.note && <div className="text-gray-400 text-xs mt-1 italic">"{b.note}"</div>}
                       </div>
@@ -329,7 +329,7 @@ export default function BarberDashboard() {
                           <div key={b._id} className="text-sm flex items-center justify-between gap-2">
                             <div>
                               <div className="font-bold">{b.bookingTime}</div>
-                              <div className="text-xs text-gray-600">{b.userId?.name || "Khách"}</div>
+                              <div className="text-xs text-gray-600">{b.userId?.name || b.userId?.username || "Khách"}</div>
                             </div>
                             <span
                               className={`px-2 py-1 rounded text-[10px] font-bold ${

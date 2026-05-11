@@ -56,7 +56,7 @@ export default function Profile() {
             name: userRes.data?.name || "",
             avatar: barberRes.data?.avatar ?? userRes.data?.avatar ?? "",
             phone: userRes.data?.phone || "",
-            experience: barberRes.data?.experience ?? 0,
+            experience: barberRes.data?.experienceYears ?? 0,
             specialty: barberRes.data?.specialty ?? "",
             workingHours: barberRes.data?.workingHours ?? {},
             dayOff: barberRes.data?.dayOff ?? {},
@@ -75,12 +75,12 @@ export default function Profile() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    })();
 
     return () => {
       cancelled = true;
     };
-  }, [authHeader, navigate, token]);
+  }, [authHeader, navigate, role, token]);
 
 
   const handleSaveProfile = async (e) => {
@@ -94,7 +94,7 @@ export default function Profile() {
           "/barber/me",
           {
             avatar: profile.avatar || "",
-            experience: Number(profile.experience) ?? 0,
+            experienceYears: Number(profile.experience) || 0,
             specialty: profile.specialty || "",
             workingHours: profile.workingHours || {},
             dayOff: profile.dayOff || {},
@@ -105,6 +105,7 @@ export default function Profile() {
         await API.put(
           "/auth/me",
           {
+            name: profile.name || "",
             avatar: profile.avatar || "",
             phone: profile.phone || "",
           },

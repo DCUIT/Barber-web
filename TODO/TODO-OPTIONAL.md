@@ -6,7 +6,7 @@ Các phần nâng cấp nếu còn thời gian.
 ---
 
 # Barber page riêng
-- [ ] Create Barber page (calendar + confirm/status) (có thể bỏ tạm nếu admin manage booking đủ demo)
+- [x] Create Barber page (calendar + confirm/status) (có thể bỏ tạm nếu admin manage booking đủ demo)
 
 ---
 
@@ -21,15 +21,14 @@ Các phần nâng cấp nếu còn thời gian.
 ---
 
 # Notifications lưu DB
-- [ ] Tạo model Notification + endpoint đọc/mark read thay vì chỉ realtime toast/bell
+- [x] Tạo model Notification + endpoint đọc/mark read thay vì chỉ realtime toast/bell
 
 ---
 
 # Strict permissions
-- [ ] Enforce barber permission: barber chỉ update booking của mình
+- [x] Enforce barber permission: barber chỉ update booking của mình
 
 ---
 
 # Done condition
 - Các nâng cấp thêm vào không phá vỡ demo hiện tại
-

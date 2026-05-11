@@ -1,7 +1,7 @@
 import express from 'express';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { Booking } from '../models/Booking.js';
-import { Barber } from '../models/Barber.js';
+import { findBarberForUser } from '../services/barberResolver.js';
 
 const router = express.Router();
 
@@ -36,7 +36,7 @@ function getWeekDates(startDate) {
 
 // helper to compute free slots for today
 async function computeTodayAvailability({ barberId, date }) {
-  const barber = await Barber.findById(barberId);
+  const barber = await findBarberForUser(barberId);
   if (!barber) return { slots: [] };
 
   const weekday = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
@@ -68,13 +68,14 @@ router.get('/bookings/today', requireAuth, requireRole(['barber']), async (req, 
     const { date } = req.query;
     if (!date) return res.status(400).json({ msg: 'Missing date' });
 
-    const barberId = req.user.id;
+    const barber = await findBarberForUser(req.user.id);
+    if (!barber) return res.status(404).json({ msg: 'Barber not found' });
 
     const bookings = await Booking.find({
-      barberId,
+      barberId: barber._id,
       bookingDate: date,
     })
-      .populate('userId', 'username')
+      .populate('userId', 'name username')
       .populate('serviceId', 'name price')
       .populate('barberId', 'name');
 
@@ -90,14 +91,15 @@ router.get('/bookings/week', requireAuth, requireRole(['barber']), async (req, r
     const { start } = req.query;
     if (!start) return res.status(400).json({ msg: 'Missing start' });
 
-    const barberId = req.user.id;
+    const barber = await findBarberForUser(req.user.id);
+    if (!barber) return res.status(404).json({ msg: 'Barber not found' });
     const weekDates = getWeekDates(start);
 
     const bookings = await Booking.find({
-      barberId,
+      barberId: barber._id,
       bookingDate: { $in: weekDates },
     })
-      .populate('userId', 'username')
+      .populate('userId', 'name username')
       .populate('serviceId', 'name price')
       .populate('barberId', 'name')
       .sort({ createdAt: 1 });
