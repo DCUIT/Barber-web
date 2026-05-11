@@ -4,6 +4,10 @@ import { Booking } from '../models/Booking.js';
 import { Service } from '../models/Service.js';
 import { Barber } from '../models/Barber.js';
 import { User } from '../models/User.js';
+import Notification from '../models/notification.model.js';
+import { emitNotification } from '../services/notificationEmitter.js';
+
+
 
 function timeToMinutes(t) {
   const [h, m] = t.split(':').map(Number);
@@ -197,9 +201,49 @@ bookingsRouter.get('/stats', requireAuth, requireRole(['admin']), async (req, re
       .populate('serviceId', 'name price')
       .populate('barberId', 'name');
 
+    // Realtime booking (existing)
     io.emit('newBooking', fullBooking);
 
+    // Create DB notifications: admin + selected barber only
+
+    // receiverRole must match user schema enum: user | barber | admin
+    const adminUsers = await User.find({ role: 'admin' }).select('_id');
+    const adminIdList = adminUsers.map((u) => u._id);
+
+    const notificationsToEmit = [];
+
+    // Admin notifications (send to all admins found)
+    for (const adminId of adminIdList) {
+      const notif = await Notification.create({
+        receiverId: adminId,
+        receiverRole: 'admin',
+        title: 'New booking',
+        message: `User đặt lịch: ${fullBooking.bookingDate} ${fullBooking.bookingTime}`,
+        type: 'booking_created',
+        isRead: false,
+      });
+      notificationsToEmit.push(notif);
+    }
+
+    // Selected barber notification
+    if (barberId) {
+      const barberNotif = await Notification.create({
+        receiverId: barberId,
+        receiverRole: 'barber',
+        title: 'New booking',
+        message: `Bạn có lịch mới: ${fullBooking.bookingDate} ${fullBooking.bookingTime}`,
+        type: 'booking_created',
+        isRead: false,
+      });
+      notificationsToEmit.push(barberNotif);
+    }
+
+    // Emit notification realtime
+    notificationsToEmit.forEach((n) => emitNotification(io, n));
+
+
     res.json(booking);
+
   } catch (error) {
     console.error("Error creating booking:", error);
     res.status(500).json({ msg: 'Server error creating booking' });
@@ -218,10 +262,32 @@ bookingsRouter.get('/stats', requireAuth, requireRole(['admin']), async (req, re
   booking.status = status;
   await booking.save();
 
-    // Emit booking updated event
-    io.emit('bookingUpdated', booking); // Emit to all connected clients
+    // Emit booking updated event (existing realtime refresh)
+    io.emit('bookingUpdated', booking);
+
+    // Create DB notification for user on Accepted/Completed/Cancelled
+    const shouldNotifyUser = ['Accepted', 'Completed', 'Cancelled'].includes(status);
+    if (shouldNotifyUser) {
+      const fullBooking = await Booking.findById(booking._id)
+        .populate('userId', '_id')
+        .populate('barberId', '_id');
+
+      const userId = fullBooking.userId?._id;
+      if (userId) {
+        const notif = await Notification.create({
+          receiverId: userId,
+          receiverRole: 'user',
+          title: 'Booking update',
+          message: `Booking ${status.toLowerCase()}.`,
+          type: 'booking_status',
+          isRead: false,
+        });
+        io.emit('notification:new', notif);
+      }
+    }
 
   res.json(booking);
+
 });
 
   bookingsRouter.delete('/:id', requireAuth, requireRole(['admin']), async (req, res) => {

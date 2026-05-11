@@ -6,6 +6,8 @@ import { useSocket } from "../context/SocketContext";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
 import { useAuth } from "../context/AuthContext";
 import ConfirmDialog from "../components/ConfirmDialog";
+import notificationService from "../services/notificationService";
+
 
 const TABS = { DASHBOARD: "dashboard", SERVICES: "services", BARBERS: "barbers", BOOKINGS: "bookings", USERS: "users" };
 
@@ -127,47 +129,36 @@ export default function Admin() {
     document.title = `${TAB_LABELS[activeTab]} | The Cutting Edge Admin`;
   }, [activeTab]);
 
-  // Notification center (realtime)
+  // Notifications (DB + realtime)
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const notificationStateService = notificationService; // chỉ để rõ intent
+
+
   // Socket.io integration
   const { socket } = useSocket();
+
+  // Default load notifications from backend
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { notifications: list, unreadCount: count } = await notificationService.getNotifications();
+        setNotifications(list || []);
+        setUnreadCount(count || 0);
+      } catch (e) {
+        // ignore (optional)
+      }
+    };
+    if (token) load();
+  }, [token]);
+
+
   useEffect(() => {
     if (!socket) return;
 
-    const handleNewBooking = (newBooking) => {
-      const message = `Khách ${newBooking.userId?.name || 'mới'} vừa đặt lịch!`;
-
-      setNotifications((prev) => [
-        {
-          id: String(Date.now()) + String(Math.random()),
-          title: 'New booking',
-          message,
-          createdAt: new Date().toISOString()
-        },
-        ...prev
-      ].slice(0, 50));
-
-      setUnreadCount((c) => c + 1);
-      toast.success(message, { duration: 5000 });
-
-      if (activeTab === TABS.BOOKINGS || activeTab === TABS.DASHBOARD) {
-        fetchData();
-      }
-    };
-
-    const handleBookingUpdated = () => {
-      setNotifications((prev) => [
-        {
-          id: String(Date.now()) + String(Math.random()),
-          title: 'Booking updated',
-          message: 'Trạng thái lịch hẹn đã được cập nhật.',
-          createdAt: new Date().toISOString()
-        },
-        ...prev
-      ].slice(0, 50));
-
+    const handleNotificationNew = (notif) => {
+      setNotifications((prev) => [notif, ...prev].slice(0, 20));
       setUnreadCount((c) => c + 1);
 
       if (activeTab === TABS.BOOKINGS || activeTab === TABS.DASHBOARD) {
@@ -175,14 +166,28 @@ export default function Admin() {
       }
     };
 
-    socket.on('newBooking', handleNewBooking);
-    socket.on('bookingUpdated', handleBookingUpdated);
+
+    socket.on("notification:new", handleNotificationNew);
 
     return () => {
-      socket.off('newBooking', handleNewBooking);
-      socket.off('bookingUpdated', handleBookingUpdated);
+      socket.off("notification:new", handleNotificationNew);
     };
   }, [activeTab, fetchData, socket]);
+
+  const markAllRead = async () => {
+    try {
+      await (await import("../services/notificationService.js")).default.markAllAsRead();
+      setUnreadCount(0);
+      // refresh list
+      const { notifications: list, unreadCount: count } = await (await import("../services/notificationService.js")).default.getNotifications();
+      setNotifications(list || []);
+      setUnreadCount(count || 0);
+    } catch (e) {
+      // ignore
+    }
+  };
+
+
 
 
   const updateBookingStatus = async (id, status) => {
@@ -390,7 +395,7 @@ export default function Admin() {
               <button
                 type="button"
                 className="bg-white border rounded-lg px-3 py-2 shadow-sm hover:bg-gray-50 font-bold"
-                onClick={() => setUnreadCount(0)}
+          onClick={markAllRead}
               >
                 <span className="inline-flex items-center gap-2">
                   <i className="fas fa-bell"></i>
