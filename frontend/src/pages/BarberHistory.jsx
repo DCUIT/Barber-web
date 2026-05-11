@@ -36,7 +36,9 @@ export default function BarberHistory() {
     setLoading(true);
     try {
       const res = await API.get("/bookings", authHeader);
-      setBookings(res.data || []);
+      // Ensure we extract the array if it's nested, and fallback to an empty array
+      const data = res.data?.bookings || res.data;
+      setBookings(Array.isArray(data) ? data : []);
     } catch (e) {
       setError(e?.response?.data?.msg || "Không thể tải lịch");
     } finally {

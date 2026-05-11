@@ -40,7 +40,9 @@ export default function Login() {
       navigate("/");
     } catch (err) {
       if (!err.response) {
-        setError("Lỗi kết nối: Hãy đảm bảo Backend đang chạy ở cổng 4000 và MongoDB đã bật.");
+        setError(import.meta.env.DEV 
+          ? "Lỗi kết nối: Hãy đảm bảo Backend đang chạy ở cổng 4000." 
+          : "Không thể kết nối tới máy chủ. Vui lòng thử lại sau.");
       } else {
         setError(err.response?.data?.msg || "Sai tài khoản hoặc mật khẩu!");
       }

@@ -72,17 +72,17 @@ export default function Admin() {
 
         const allBookings = bookingsRes.data.bookings || bookingsRes.data; // Hỗ trợ cả 2 cấu trúc
         setBookings(Array.isArray(allBookings) ? allBookings : []);
+
+        const chartData = Array.isArray(statsRes.data) ? statsRes.data : [];
+        const revenue = chartData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
+
+        setDashboardChartData(chartData);
         setStats({
           totalBookings: bookingsRes.data.totalCount || allBookings.length,
-          // Chỉ tính doanh thu từ các lịch hẹn đã hoàn thành (Completed)
-          totalRevenue: Array.isArray(dashboardChartData)
-            ? dashboardChartData.reduce((acc, curr) => acc + (curr.revenue || 0), 0)
-            : 0,
+          totalRevenue: revenue,
           totalBarbers: barbersRes.data.length,
           totalUsers: usersRes.data.length
         });
-
-        setDashboardChartData(Array.isArray(statsRes.data) ? statsRes.data : []);
       }
 
       if (activeTab === TABS.SERVICES) {
@@ -452,7 +452,7 @@ export default function Admin() {
               <div className="bg-white p-6 rounded-xl shadow-sm">
                 <h3 className="font-bold mb-4">Biểu đồ Doanh thu (VNĐ)</h3>
                 <div className="h-80 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer key="revenue-chart" width="100%" height="100%">
                     <AreaChart data={dashboardChartData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="name" fontSize={12} tickMargin={10} />
@@ -468,7 +468,7 @@ export default function Admin() {
               <div className="bg-white p-6 rounded-xl shadow-sm">
                 <h3 className="font-bold mb-4">Lượng đặt lịch theo ngày</h3>
                 <div className="h-80 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer key="booking-chart" width="100%" height="100%">
                     <BarChart data={dashboardChartData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="name" fontSize={12} tickMargin={10} />
