@@ -270,7 +270,7 @@ export default function Home() {
         />
       ) : null}
 
-      <Footer />
+
     </div>
   );
 }
