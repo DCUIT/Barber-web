@@ -385,30 +385,37 @@ export default function Admin() {
       {/* MAIN CONTENT */}
       <main className="flex-1 min-w-0 p-4 sm:p-8 text-gray-800 overflow-x-hidden">
         {/* Mobile Tab Bar */}
-        <div className="md:hidden mb-6 flex overflow-x-auto gap-2 pb-3 no-scrollbar scroll-smooth w-full">
-          {Object.values(TABS).map((tab) => {
-            const icons = {
-              [TABS.DASHBOARD]: "fas fa-chart-line",
-              [TABS.BOOKINGS]: "fas fa-calendar-alt",
-              [TABS.SERVICES]: "fas fa-cut",
-              [TABS.BARBERS]: "fas fa-user-friends",
-              [TABS.USERS]: "fas fa-users"
-            };
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all border shadow-sm ${
-                  activeTab === tab
-                    ? "bg-black text-[#d4a373] border-black"
-                    : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                <i className={icons[tab]}></i>
-                {TAB_LABELS[tab]}
-              </button>
-            );
-          })}
+        <div className="md:hidden mb-6 w-full">
+          <div className="flex gap-2 flex-wrap justify-center px-1 pb-3">
+
+
+
+            {Object.values(TABS).map((tab) => {
+              const icons = {
+                [TABS.DASHBOARD]: "fas fa-chart-line",
+                [TABS.BOOKINGS]: "fas fa-calendar-alt",
+                [TABS.SERVICES]: "fas fa-cut",
+                [TABS.BARBERS]: "fas fa-user-friends",
+                [TABS.USERS]: "fas fa-users",
+              };
+
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all border shadow-sm ${
+                    activeTab === tab
+                      ? "bg-black text-[#d4a373] border-black"
+                      : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                  }`}
+                  type="button"
+                >
+                  <i className={icons[tab]}></i>
+                  {TAB_LABELS[tab]}
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold text-gray-800">{TAB_LABELS[activeTab]}</h2>
