@@ -233,3 +233,12 @@ select option {
     gap: 0;
   }
 }
+
+/* Ẩn thanh cuộn nhưng vẫn giữ tính năng cuộn ngang cho Tab Bar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

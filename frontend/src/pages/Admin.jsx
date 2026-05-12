@@ -3,7 +3,7 @@ import API from "../api";
 import { formatCurrency as formatPrice } from "../utils/formatPrice"; // Giả sử hàm này vẫn dùng được cho VNĐ
 import toast from "react-hot-toast";
 import { useSocket } from "../context/SocketContext";
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
+
 import { useAuth } from "../context/AuthContext";
 import ConfirmDialog from "../components/ConfirmDialog";
 import notificationService from "../services/notificationService";
@@ -51,7 +51,8 @@ export default function Admin() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10); // Số lượng mục trên mỗi trang
   const [totalBookingsCount, setTotalBookingsCount] = useState(0);
-  const [dashboardChartData, setDashboardChartData] = useState([]);
+  // const [dashboardChartData, setDashboardChartData] = useState([]); // disabled recharts
+
   
   const { token } = useAuth(); // Sử dụng AuthContext
 
@@ -78,7 +79,8 @@ export default function Admin() {
         const chartData = Array.isArray(statsRes.data) ? statsRes.data : [];
         const revenue = chartData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
 
-        setDashboardChartData(chartData);
+        // setDashboardChartData(chartData); // disabled recharts
+
         setStats({
           totalBookings: bookingsRes.data.totalCount || allBookings.length,
           totalRevenue: revenue,
@@ -358,7 +360,7 @@ export default function Admin() {
 
   return (
     <div className="flex min-h-screen bg-gray-100 text-gray-800">
-      {/* SIDEBAR */}
+      {/* SIDEBAR (desktop) */}
       <aside className="w-64 bg-black text-white p-6 hidden md:block">
         <div className="text-[#d4a373] font-bold text-xl mb-10 tracking-widest uppercase">Hệ Thống Barber</div>
         <nav className="space-y-4">
@@ -381,7 +383,33 @@ export default function Admin() {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 p-8 text-gray-800">
+      <main className="flex-1 min-w-0 p-4 sm:p-8 text-gray-800 overflow-x-hidden">
+        {/* Mobile Tab Bar */}
+        <div className="md:hidden mb-6 flex overflow-x-auto gap-2 pb-3 no-scrollbar scroll-smooth w-full">
+          {Object.values(TABS).map((tab) => {
+            const icons = {
+              [TABS.DASHBOARD]: "fas fa-chart-line",
+              [TABS.BOOKINGS]: "fas fa-calendar-alt",
+              [TABS.SERVICES]: "fas fa-cut",
+              [TABS.BARBERS]: "fas fa-user-friends",
+              [TABS.USERS]: "fas fa-users"
+            };
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all border shadow-sm ${
+                  activeTab === tab
+                    ? "bg-black text-[#d4a373] border-black"
+                    : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <i className={icons[tab]}></i>
+                {TAB_LABELS[tab]}
+              </button>
+            );
+          })}
+        </div>
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold text-gray-800">{TAB_LABELS[activeTab]}</h2>
           <div className="flex items-center gap-4">
@@ -455,39 +483,19 @@ export default function Admin() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Biểu đồ doanh thu */}
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <h3 className="font-bold mb-4">Biểu đồ Doanh thu (VNĐ)</h3>
-                <div className="h-80 w-full">
-                  <ResponsiveContainer key="revenue-chart" width="100%" height="100%">
-                    <AreaChart data={dashboardChartData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" fontSize={12} tickMargin={10} />
-                      <YAxis fontSize={12} tickFormatter={(value) => `${value/1000}k`} />
-                      <Tooltip formatter={(value) => formatPrice(value)} />
-                      <Area type="monotone" dataKey="revenue" stroke="#10b981" fill="#d1fae5" strokeWidth={3} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+            {/* Recharts charts disabled to prevent runtime crash; keep layout stable */}
+            <div className="text-sm text-gray-500 col-span-full">
+              Charts disabled (recharts runtime error)
+            </div>
 
-              {/* Biểu đồ lượng booking */}
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <h3 className="font-bold mb-4">Lượng đặt lịch theo ngày</h3>
-                <div className="h-80 w-full">
-                  <ResponsiveContainer key="booking-chart" width="100%" height="100%">
-                    <BarChart data={dashboardChartData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" fontSize={12} tickMargin={10} />
-                      <YAxis fontSize={12} />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white p-6 rounded-xl shadow-sm col-span-1 lg:col-span-2">
+                <div className="text-sm text-gray-500">
+                  Recharts charts disabled to avoid runtime “Invalid hook call” from recharts.
                 </div>
               </div>
             </div>
+
           </div>
         )}
 

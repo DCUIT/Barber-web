@@ -205,12 +205,6 @@ export default function Navbar() {
               Đăng nhập
             </Link>
           )}
-          <Link to="/" className="hover:text-[#d4a373] transition">
-            Ưu Đãi
-          </Link>
-          <Link to="/" className="hover:text-[#d4a373] transition">
-            Liên Hệ
-          </Link>
         </ul>
       </nav>
 
@@ -266,6 +260,7 @@ export default function Navbar() {
 
         {/* Desktop notification bell */}
         <div className="relative hidden md:block">
+
           <button
             onClick={() => setShowNotif(!showNotif)}
             className="relative text-white hover:text-[#d4a373] transition"
