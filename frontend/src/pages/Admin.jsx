@@ -426,32 +426,39 @@ export default function Admin() {
             <div className="relative">
               <button
                 type="button"
-                className="bg-white border rounded-lg px-3 py-2 shadow-sm hover:bg-gray-50 font-bold"
-          onClick={markAllRead}
+                className="relative text-white hover:text-[#d4a373] transition"
+                onClick={markAllRead}
               >
-                <span className="inline-flex items-center gap-2">
-                  <i className="fas fa-bell"></i>
-                  <span>Thông báo</span>
-                  {unreadCount > 0 && (
-                    <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">
-                      {unreadCount}
-                    </span>
-                  )}
-                </span>
+                <i className="fas fa-bell text-xl"></i>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
 
               {notifications.length > 0 && (
                 <div className="absolute right-0 mt-2 w-[360px] bg-white border rounded-xl shadow-lg overflow-hidden z-10">
-                  <div className="p-3 border-b">
-                    <div className="font-bold">Realtime notifications</div>
-                    <div className="text-xs text-gray-500">Mới nhất trước</div>
+                  <div className="p-3 border-b flex items-center justify-between">
+                    <div>
+                      <div className="font-bold">Realtime notifications</div>
+                      <div className="text-xs text-gray-500">Mới nhất trước</div>
+                    </div>
+                    <div className="text-xs text-gray-500">{unreadCount} chưa đọc</div>
                   </div>
                   <div className="max-h-72 overflow-y-auto">
                     {notifications.map((n) => (
                       <div key={n.id} className="p-3 border-b last:border-b-0 hover:bg-gray-50">
                         <div className="text-sm font-bold">{n.title}</div>
                         <div className="text-sm text-gray-700">{n.message}</div>
-                        <div className="text-xs text-gray-400">{new Date(n.createdAt).toLocaleString()}</div>
+
+                        <div className="text-xs text-gray-400 mt-1">
+                          <span className="font-semibold">Loại:</span> {n.type || "booking"}
+                          {" · "}
+                          <span className="font-semibold">Trạng thái:</span> {n.isRead ? "Đã đọc" : "Chưa đọc"}
+                        </div>
+
+                        <div className="text-[10px] text-gray-400">{new Date(n.createdAt).toLocaleString()}</div>
                       </div>
                     ))}
                   </div>

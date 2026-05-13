@@ -169,12 +169,28 @@ export default function Navbar() {
       }
     };
 
+    const handleNotificationNew = (notif) => {
+      const title = notif?.title || "Thông báo";
+      const message = notif?.message || "Có cập nhật mới";
+      const time = notif?.createdAt ? new Date(notif.createdAt).toLocaleString() : "Vừa xong";
+
+      setNotifications((prev) => [
+        { id: notif?._id || Date.now(), title, message, time },
+        ...prev,
+      ].slice(0, 20));
+
+      // Optional: toast
+      toast.success(message, { icon: "🔔" });
+    };
+
     socket.on("newBooking", handleNewBooking);
     socket.on("bookingUpdated", handleBookingUpdated);
+    socket.on("notification:new", handleNotificationNew);
 
     return () => {
       socket.off("newBooking", handleNewBooking);
       socket.off("bookingUpdated", handleBookingUpdated);
+      socket.off("notification:new", handleNotificationNew);
     };
   }, [role, socket]);
 
