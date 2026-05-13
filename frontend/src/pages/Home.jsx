@@ -1,30 +1,12 @@
 import { useEffect, useState } from "react";
 
-function renderStars(rating) {
-  const v = Number(rating || 0);
-  const full = Math.floor(v);
-  const half = v - full >= 0.5;
-  const empty = 5 - full - (half ? 1 : 0);
-  return (
-    <span className="inline-flex items-center gap-1">
-      {Array.from({ length: full }).map((_, i) => (
-        <span key={`f${i}`} style={{ color: "#d4a373" }}>★</span>
-      ))}
-      {half && <span style={{ color: "#d4a373" }}>☆</span>}
-      {Array.from({ length: empty }).map((_, i) => (
-        <span key={`e${i}`} style={{ color: "#cfcfcf" }}>★</span>
-      ))}
-    </span>
-  );
-}
-
 import API from "../api";
 import { useNavigate } from "react-router-dom";
 import "../style.css";
 import BarberReviewsModal from "./BarberReviewsModal";
 
 
-import Footer from "../components/Footer";
+
 
 export default function Home() {
   const navigate = useNavigate();
@@ -39,10 +21,7 @@ export default function Home() {
   });
 
   const [services, setServices] = useState([]);
-  const [barbers, setBarbers] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  const [keyword, setKeyword] = useState("");
   const [selectedBarber, setSelectedBarber] = useState(null);
 
 
@@ -50,32 +29,11 @@ export default function Home() {
     API.get("/services")
       .then((res) => {
         setServices(res.data || []);
-        setLoading(false);
       })
       .catch(() => {
         setServices([]);
-        setLoading(false);
       });
-
-    API.get("/barbers")
-      .then((res) => setBarbers(res.data || []))
-      .catch(() => setBarbers([]));
   }, []);
-
-  const filteredServices = services.filter((s) => {
-    const k = keyword.trim().toLowerCase();
-    if (!k) return true;
-    return (s.name || "").toLowerCase().includes(k) || (s.category || "").toLowerCase().includes(k);
-  });
-
-  const filteredBarbers = barbers.filter((b) => {
-    const k = keyword.trim().toLowerCase();
-    if (!k) return true;
-    return (
-      (b.name || "").toLowerCase().includes(k) ||
-      (b.specialty || "").toLowerCase().includes(k)
-    );
-  });
 
   return (
     <div className="home-wrapper">
@@ -245,9 +203,7 @@ export default function Home() {
           barber={selectedBarber}
           onClose={() => setSelectedBarber(null)}
           onSubmitted={() => {
-            API.get("/barbers")
-              .then((res) => setBarbers(res.data || []))
-              .catch(() => {});
+            // Refresh barbers if needed
           }}
         />
       ) : null}

@@ -11,14 +11,15 @@ import notificationService from "../services/notificationService";
 import "./adminDashboardStyles.css";
 
 
-const TABS = { DASHBOARD: "dashboard", SERVICES: "services", BARBERS: "barbers", BOOKINGS: "bookings", USERS: "users" };
+const TABS = { DASHBOARD: "dashboard", SERVICES: "services", BARBERS: "barbers", BOOKINGS: "bookings", USERS: "users", REPORTS: "reports" };
 
 const TAB_LABELS = {
   [TABS.DASHBOARD]: "Bảng điều khiển",
   [TABS.BOOKINGS]: "Quản lý lịch hẹn",
   [TABS.SERVICES]: "Quản lý dịch vụ",
   [TABS.BARBERS]: "Đội ngũ Barber",
-  [TABS.USERS]: "Quản lý người dùng"
+  [TABS.USERS]: "Quản lý người dùng",
+  [TABS.REPORTS]: "Báo cáo"
 };
 
 export default function Admin() {
@@ -158,8 +159,7 @@ export default function Admin() {
   }, [activeTab]);
 
   // Notifications (DB + realtime)
-  const [_, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [, setNotifications] = useState([]);
 
   // Socket.io integration
   const { socket } = useSocket();
@@ -168,9 +168,8 @@ export default function Admin() {
   useEffect(() => {
     const load = async () => {
       try {
-        const { notifications: list, unreadCount: count } = await notificationService.getNotifications();
+        const { notifications: list } = await notificationService.getNotifications();
         setNotifications(list || []);
-        setUnreadCount(count || 0);
       } catch {
         // ignore (optional)
       }
@@ -184,7 +183,6 @@ export default function Admin() {
 
     const handleNotificationNew = (notif) => {
       setNotifications((prev) => [notif, ...prev].slice(0, 20));
-      setUnreadCount((c) => c + 1);
 
       if (activeTab === TABS.BOOKINGS || activeTab === TABS.DASHBOARD) {
         fetchData();
@@ -198,19 +196,6 @@ export default function Admin() {
       socket.off("notification:new", handleNotificationNew);
     };
   }, [activeTab, fetchData, socket]);
-
-  const markAllRead = async () => {
-    try {
-      await notificationService.markAllAsRead();
-      setUnreadCount(0);
-      // refresh list
-      const { notifications: list, unreadCount: count } = await notificationService.getNotifications();
-      setNotifications(list || []);
-      setUnreadCount(count || 0);
-    } catch {
-      // ignore
-    }
-  };
 
 
 
@@ -418,6 +403,7 @@ export default function Admin() {
           {[
             { id: TABS.DASHBOARD, label: "Dashboard", icon: "fas fa-th-large" },
             { id: TABS.BOOKINGS, label: "Appointments", icon: "fas fa-calendar-alt" },
+            { id: TABS.REPORTS, label: "Reports", icon: "fas fa-chart-bar" },
             { id: TABS.USERS, label: "Clients", icon: "fas fa-users" },
             { id: TABS.BARBERS, label: "Barbers", icon: "fas fa-user-tie" },
             { id: TABS.SERVICES, label: "Services", icon: "fas fa-cut" },
@@ -626,7 +612,7 @@ export default function Admin() {
             <input
               type="text"
               placeholder="Tìm kiếm khách hàng..."
-              className="border p-2 rounded flex-1 min-w-[200px]"
+              className="bg-[#2d2d2d] border-none rounded-xl p-2 flex-1 min-w-[200px] text-white focus:ring-1 focus:ring-[#c4a47c]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -731,6 +717,151 @@ export default function Admin() {
           </div>
         )}
               </div>
+      )}
+
+      {/* REPORTS SECTION */}
+      {activeTab === TABS.REPORTS && (
+        <div className="grid grid-cols-12 gap-6 h-full">
+          {/* LEFT AREA (Stats & Charts) */}
+          <div className="col-span-12 lg:col-span-9 space-y-6">
+            {/* TOP STATS CARDS */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="card-bg p-5 rounded-2xl">
+                <div className="flex items-center gap-3 mb-3 text-gray-400">
+                  <i className="fas fa-dollar-sign w-4 h-4 gold-accent"></i>
+                  <span className="text-xs uppercase font-bold tracking-wider">Service Revenue</span>
+                </div>
+                <h3 className="text-2xl font-bold">145M VND</h3>
+              </div>
+              <div className="card-bg p-5 rounded-2xl">
+                <div className="flex items-center gap-3 mb-3 text-gray-400">
+                  <i className="fas fa-shopping-cart w-4 h-4 text-green-500"></i>
+                  <span className="text-xs uppercase font-bold tracking-wider">Product Sales</span>
+                </div>
+                <h3 className="text-2xl font-bold">28M VND</h3>
+              </div>
+              <div className="card-bg p-5 rounded-2xl">
+                <div className="flex items-center gap-3 mb-3 text-gray-400">
+                  <i className="fas fa-trophy w-4 h-4 text-red-500"></i>
+                  <span className="text-xs uppercase font-bold tracking-wider">Top Service</span>
+                </div>
+                <h3 className="text-2xl font-bold">Fade & Beard <span className="text-sm font-normal text-gray-500">(312 cuts)</span></h3>
+              </div>
+            </div>
+
+            {/* REVENUE TRENDS CHART */}
+            <div className="card-bg rounded-2xl p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-semibold text-lg">Revenue Trends</h3>
+                <select className="bg-[#2d2d2d] text-xs py-1.5 px-4 rounded-lg border-none custom-select">
+                  <option>Last 30 days</option>
+                  <option>Last 90 days</option>
+                </select>
+              </div>
+              <div className="h-[300px] w-full">
+                <RevenueChart data={chartData} />
+              </div>
+            </div>
+
+            {/* DETAILED REPORT TABLE */}
+            <div className="card-bg rounded-2xl overflow-hidden">
+              <div className="p-5 flex justify-between items-center border-b border-[#2d2d2d]">
+                <h3 className="font-semibold">Detailed Report - Oct 2023</h3>
+                <button className="text-gray-400 hover:text-white transition"><i className="fas fa-ellipsis-h w-5 h-5"></i></button>
+              </div>
+              <table className="w-full text-sm">
+                <thead className="bg-[#252525] text-gray-400">
+                  <tr>
+                    <th className="py-4 px-6 text-left font-medium">Date</th>
+                    <th className="py-4 px-6 text-left font-medium">Client</th>
+                    <th className="py-4 px-6 text-left font-medium">Service/Product</th>
+                    <th className="py-4 px-6 text-left font-medium">Barber</th>
+                    <th className="py-4 px-6 text-left font-medium">Total Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#2d2d2d]">
+                  <tr className="hover:bg-white/[0.02]">
+                    <td className="py-4 px-6 text-gray-400 text-xs">Oct 27, 2023 | 09:00 AM</td>
+                    <td className="py-4 px-6 font-medium">Le Van Son</td>
+                    <td className="py-4 px-6">Classic Cut</td>
+                    <td className="py-4 px-6 flex items-center gap-2"><img src="https://i.pravatar.cc/150?u=alex" className="w-6 h-6 rounded-full" alt="" /> Alex Nguyen</td>
+                    <td className="py-4 px-6 font-bold gold-accent">145,000 VND</td>
+                  </tr>
+                  <tr className="hover:bg-white/[0.02]">
+                    <td className="py-4 px-6 text-gray-400 text-xs">Oct 27, 2023 | 07:30 AM</td>
+                    <td className="py-4 px-6 font-medium">Nguyen Hoang Nam</td>
+                    <td className="py-4 px-6">Fade & Service</td>
+                    <td className="py-4 px-6 flex items-center gap-2"><img src="https://i.pravatar.cc/150?u=ben" className="w-6 h-6 rounded-full" alt="" /> Ben</td>
+                    <td className="py-4 px-6 font-bold gold-accent">280,000 VND</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* RIGHT AREA (Filters & Top Services) */}
+          <div className="col-span-12 lg:col-span-3 space-y-6">
+            {/* FILTERS */}
+            <div className="card-bg p-6 rounded-2xl">
+              <h3 className="font-semibold mb-4">Filter Reports</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] uppercase text-gray-300 font-bold mb-1 block">Date Range</label>
+                  <div className="relative">
+                    <i className="fas fa-calendar absolute left-3 top-2.5 w-4 h-4 text-gray-500"></i>
+                    <input type="text" value="Oct 1 - Oct 31, 2023" className="w-full bg-[#2d2d2d] border-none rounded-xl py-2.5 pl-10 pr-4 text-xs text-white focus:ring-1 focus:ring-[#c4a47c]" readOnly />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase text-gray-300 font-bold mb-1 block">Report Type</label>
+                  <select className="w-full bg-[#2d2d2d] border-none rounded-xl py-2.5 px-4 text-xs text-white custom-select">
+                    <option>Revenue, Staff Performance</option>
+                    <option>Inventory Status</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* SALES BY SERVICE TYPE */}
+            <div className="card-bg p-6 rounded-2xl">
+              <h3 className="font-semibold mb-6">Sales by Service Type</h3>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs uppercase tracking-tighter">
+                    <span className="text-gray-400 font-bold">Fade Cut</span>
+                    <span className="font-bold">45M</span>
+                  </div>
+                  <div className="w-full bg-[#2d2d2d] h-4 rounded-sm overflow-hidden">
+                    <div className="gold-bg h-full rounded-sm shadow-[0_0_10px_rgba(196,164,124,0.5)]" style={{width: '90%'}}></div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs uppercase tracking-tighter">
+                    <span className="text-gray-400 font-bold">Classic Cut</span>
+                    <span className="font-bold">38M</span>
+                  </div>
+                  <div className="w-full bg-[#2d2d2d] h-4 rounded-sm overflow-hidden">
+                    <div className="gold-bg h-full rounded-sm opacity-80" style={{width: '75%'}}></div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs uppercase tracking-tighter">
+                    <span className="text-gray-400 font-bold">Beard Trim</span>
+                    <span className="font-bold">22M</span>
+                  </div>
+                  <div className="w-full bg-[#2d2d2d] h-4 rounded-sm overflow-hidden">
+                    <div className="gold-bg h-full rounded-sm opacity-60" style={{width: '45%'}}></div>
+                  </div>
+                </div>
+                <div className="space-y-2 text-center pt-2">
+                  <div className="text-[10px] text-gray-500 flex justify-between px-2">
+                    <span>0</span><span>10M</span><span>20M</span><span>30M</span><span>40M</span><span>50M</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
         {/* USERS TABLE */}

@@ -157,19 +157,20 @@ export default function BarberDashboard() {
   }, [weekStart]);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800">
+    <div className="min-h-screen bg-[#f8fafc] text-gray-800">
       <section className="py-10 text-center">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 uppercase tracking-tight">Barber dashboard</h1>
+        <h1 className="text-3xl md:text-4xl font-black text-gray-900 uppercase tracking-tighter">Bảng điều khiển</h1>
+        <p className="text-gray-500 mt-2 font-medium">Theo dõi và quản lý lịch hẹn của bạn</p>
         <div className="mt-3 flex justify-center gap-3">
           <button
             onClick={() => setTab("today")}
-            className={`px-4 py-2 rounded-xl font-bold border ${tab === "today" ? "bg-black text-white" : "bg-white"}`}
+            className={`px-6 py-2 rounded-full font-bold transition-all ${tab === "today" ? "bg-black text-white shadow-lg" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}
           >
             Hôm nay
           </button>
           <button
             onClick={() => setTab("week")}
-            className={`px-4 py-2 rounded-xl font-bold border ${tab === "week" ? "bg-black text-white" : "bg-white"}`}
+            className={`px-6 py-2 rounded-full font-bold transition-all ${tab === "week" ? "bg-black text-white shadow-lg" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}
           >
             Tuần này
           </button>
@@ -179,17 +180,32 @@ export default function BarberDashboard() {
       <main className="container mx-auto px-4 pb-20">
         {/* Quick Stats Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 max-w-5xl mx-auto">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-yellow-500">
-            <div className="text-gray-500 text-xs uppercase font-bold">Lịch chờ duyệt</div>
-            <div className="text-2xl font-black">{todayBookings.filter(b => b.status === "Pending").length}</div>
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+            <div>
+              <div className="text-amber-600 text-xs uppercase font-black tracking-widest mb-1">Chờ duyệt</div>
+              <div className="text-3xl font-black text-gray-900">{todayBookings.filter(b => b.status === "Pending").length}</div>
+            </div>
+            <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 text-xl">
+              <i className="fas fa-hourglass-half"></i>
+            </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-green-500">
-            <div className="text-gray-500 text-xs uppercase font-bold">Lịch hôm nay</div>
-            <div className="text-2xl font-black">{todayBookings.length}</div>
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+            <div>
+              <div className="text-emerald-600 text-xs uppercase font-black tracking-widest mb-1">Tổng lịch hẹn</div>
+              <div className="text-3xl font-black text-gray-900">{todayBookings.length}</div>
+            </div>
+            <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-500 text-xl">
+              <i className="fas fa-calendar-check"></i>
+            </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-blue-500">
-            <div className="text-gray-500 text-xs uppercase font-bold">Hoàn thành</div>
-            <div className="text-2xl font-black">{todayBookings.filter(b => b.status === "Completed").length}</div>
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
+            <div>
+              <div className="text-blue-600 text-xs uppercase font-black tracking-widest mb-1">Đã xong</div>
+              <div className="text-3xl font-black text-gray-900">{todayBookings.filter(b => b.status === "Completed").length}</div>
+            </div>
+            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 text-xl">
+              <i className="fas fa-check-double"></i>
+            </div>
           </div>
         </div>
 
@@ -197,11 +213,14 @@ export default function BarberDashboard() {
         {loading ? <div className="py-6 text-center text-gray-500">Đang tải...</div> : null}
 
         {tab === "today" && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="flex justify-between items-center mb-6">
-               <h2 className="font-bold text-gray-900 ml-6 mt-6">Lịch hẹn hôm nay ({todayStr})</h2>
-               <button onClick={fetchToday} className="mr-6 mt-6 text-blue-600 text-xs font-bold uppercase tracking-widest hover:text-blue-700">
-                  <i className="fas fa-sync-alt mr-1"></i> Làm mới
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden max-w-5xl mx-auto">
+            <div className="flex justify-between items-center p-6 border-b border-gray-50 bg-gray-50/50">
+               <h2 className="font-black text-gray-900 flex items-center gap-2">
+                 <i className="fas fa-calendar-day text-blue-500"></i>
+                 Lịch hẹn hôm nay <span className="text-gray-400 font-medium ml-2">{todayStr}</span>
+               </h2>
+               <button onClick={fetchToday} className="text-blue-600 text-xs font-black uppercase tracking-widest hover:bg-blue-50 px-3 py-2 rounded-lg transition-colors">
+                  <i className="fas fa-sync-alt mr-2"></i> Làm mới
                </button>
             </div>
 
@@ -212,7 +231,7 @@ export default function BarberDashboard() {
                 {todayBookings.map((b) => (
                   <div key={b._id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-gray-900 text-white rounded-2xl flex flex-col items-center justify-center shadow-lg">
+                      <div className="w-16 h-16 bg-gray-900 text-white rounded-2xl flex flex-col items-center justify-center shadow-xl">
                         <span className="text-xs font-bold opacity-70">Giờ</span>
                         <span className="text-lg font-black">{b.bookingTime}</span>
                       </div>
@@ -228,13 +247,13 @@ export default function BarberDashboard() {
                           <>
                             <button
                               onClick={() => updateStatus(b._id, "Accepted")}
-                              className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md shadow-emerald-100 transition-all active:scale-95"
+                              className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all active:scale-95"
                             >
                               Xác nhận
                             </button>
                             <button
                               onClick={() => updateStatus(b._id, "Cancelled")}
-                              className="bg-white text-rose-600 border border-rose-100 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-rose-50 transition-all"
+                              className="bg-white text-rose-600 border border-rose-100 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-rose-50 transition-all"
                             >
                               Hủy
                             </button>
@@ -243,7 +262,7 @@ export default function BarberDashboard() {
                         {b.status === "Accepted" && (
                           <button
                             onClick={() => updateStatus(b._id, "Completed")}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95"
+                            className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95"
                           >
                             Hoàn thành
                           </button>
@@ -260,10 +279,10 @@ export default function BarberDashboard() {
               </div>
             )}
 
-            <div className="mt-6">
+            <div className="p-6 bg-gray-50/50 border-t border-gray-50">
               <button
                 onClick={() => navigate("/barber/bookings")}
-                className="w-full bg-black hover:bg-gray-900 text-white p-3 rounded-xl font-bold"
+                className="w-full bg-black hover:bg-gray-900 text-white p-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg hover:shadow-xl active:scale-[0.98]"
               >
                 Quản lý booking (accept/reject/complete)
               </button>
@@ -272,15 +291,15 @@ export default function BarberDashboard() {
         )}
 
         {tab === "week" && (
-          <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-sm p-6">
+          <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-sm p-8 border border-gray-100">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <div className="text-sm text-gray-500">Tuần bắt đầu</div>
-                <div className="font-bold text-xl">{weekStart}</div>
+                <div className="text-xs text-gray-400 font-black uppercase tracking-widest">Tuần bắt đầu</div>
+                <div className="font-black text-2xl text-gray-900">{weekStart}</div>
               </div>
               <div className="flex gap-2">
                 <button
-                  className="border px-3 py-2 rounded-xl font-bold"
+                  className="bg-white border border-gray-200 p-2.5 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition-all"
                   onClick={() => {
                     const d = new Date(weekStart + "T00:00:00");
                     d.setDate(d.getDate() - 7);
@@ -290,7 +309,7 @@ export default function BarberDashboard() {
                   Trước
                 </button>
                 <button
-                  className="border px-3 py-2 rounded-xl font-bold"
+                  className="bg-gray-900 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-black transition-all shadow-md"
                   onClick={() => {
                     setWeekStart(todayStr);
                   }}
@@ -298,7 +317,7 @@ export default function BarberDashboard() {
                   Hôm nay
                 </button>
                 <button
-                  className="border px-3 py-2 rounded-xl font-bold"
+                  className="bg-white border border-gray-200 p-2.5 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition-all"
                   onClick={() => {
                     const d = new Date(weekStart + "T00:00:00");
                     d.setDate(d.getDate() + 7);
@@ -316,20 +335,20 @@ export default function BarberDashboard() {
                 const slotsFree = dayAvailability?.slots?.length ?? 0;
                 const bookings = weekBookingsByDate[d] || [];
                 return (
-                  <div key={d} className="border rounded-xl p-4">
+                  <div key={d} className={`border rounded-2xl p-5 transition-all hover:border-blue-200 ${d === todayStr ? 'border-blue-500 ring-1 ring-blue-500 bg-blue-50/10' : 'border-gray-100'}`}>
                     <div className="flex items-baseline justify-between">
-                      <div className="font-bold">{d}</div>
-                      <div className="text-xs text-gray-500">Trống: {slotsFree}</div>
+                      <div className={`font-black ${d === todayStr ? 'text-blue-600' : 'text-gray-900'}`}>{d}</div>
+                      <div className="text-[10px] font-black uppercase bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Trống: {slotsFree}</div>
                     </div>
                     <div className="mt-2 space-y-2">
                       {bookings.length === 0 ? (
-                        <div className="text-sm text-gray-500">Không có booking</div>
+                        <div className="text-sm text-gray-300 italic py-2">Không có lịch</div>
                       ) : (
                         bookings.map((b) => (
-                          <div key={b._id} className="text-sm flex items-center justify-between gap-2">
+                          <div key={b._id} className="text-sm flex items-center justify-between gap-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
                             <div>
-                              <div className="font-bold">{b.bookingTime}</div>
-                              <div className="text-xs text-gray-600">{b.userId?.name || b.userId?.username || "Khách"}</div>
+                              <div className="font-black text-gray-800 leading-none">{b.bookingTime}</div>
+                              <div className="text-[10px] text-gray-500 mt-1 truncate max-w-[80px]">{b.userId?.name || "Khách"}</div>
                             </div>
                             <span
                               className={`px-2 py-1 rounded text-[10px] font-bold ${
@@ -353,10 +372,10 @@ export default function BarberDashboard() {
               })}
             </div>
 
-            <div className="mt-6">
+            <div className="mt-8">
               <button
                 onClick={() => navigate("/barber/bookings")}
-                className="w-full bg-black hover:bg-gray-900 text-white p-3 rounded-xl font-bold"
+                className="w-full bg-black hover:bg-gray-900 text-white p-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg hover:shadow-xl active:scale-[0.98]"
               >
                 Quản lý booking (accept/reject/complete)
               </button>
