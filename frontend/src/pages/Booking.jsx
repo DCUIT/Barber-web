@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../style.css";
 import "./Booking.css";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 
 // NOTE: Đây là layout mô phỏng đúng mẫu HTML bạn cung cấp (The Cutting Edge - Đặt Lịch Hẹn).
@@ -40,6 +41,13 @@ export default function Booking() {
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastBooking, setLastBooking] = useState(null);
+
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: () => {}
+  });
 
   useEffect(() => {
     if (!token) { // Kiểm tra token từ AuthContext
@@ -116,37 +124,45 @@ export default function Booking() {
       return;
     }
 
-    setSubmitting(true);
-    try {
-      const res = await API.post(
-        "/bookings",
-        {
-          barberId: selectedBarberId,
-          serviceId: selectedServiceId,
-          bookingDate,
-          bookingTime: selectedTime,
-          note: note || ""
-        },
-        authHeader
-      );
+    setConfirmModal({
+      open: true,
+      title: "Xác nhận đặt lịch",
+      message: "Bạn có chắc muốn đặt lịch hẹn này?",
+      onConfirm: async () => {
+        setConfirmModal({ open: false });
+        setSubmitting(true);
+        try {
+          const res = await API.post(
+            "/bookings",
+            {
+              barberId: selectedBarberId,
+              serviceId: selectedServiceId,
+              bookingDate,
+              bookingTime: selectedTime,
+              note: note || ""
+            },
+            authHeader
+          );
 
-      toast.success("Booking confirmed!");
-      setLastBooking(res.data);
-      setShowSuccessModal(true);
-      setNote("");
-      setSelectedTime("");
+          toast.success("Booking confirmed!");
+          setLastBooking(res.data);
+          setShowSuccessModal(true);
+          setNote("");
+          setSelectedTime("");
 
-      // reload slots
-      API.get(
-        `/bookings/calendar?barberId=${encodeURIComponent(selectedBarberId)}&date=${encodeURIComponent(bookingDate)}`,
-        authHeader
-      ).then((res) => setAvailableSlots(res.data?.slots || [])).catch(() => setAvailableSlots([]));
-    } catch (e) {
-      const msg = e?.response?.data?.msg || "Đặt lịch thất bại";
-      toast.error(msg);
-    } finally {
-      setSubmitting(false);
-    }
+          // reload slots
+          API.get(
+            `/bookings/calendar?barberId=${encodeURIComponent(selectedBarberId)}&date=${encodeURIComponent(bookingDate)}`,
+            authHeader
+          ).then((res) => setAvailableSlots(res.data?.slots || [])).catch(() => setAvailableSlots([]));
+        } catch (e) {
+          const msg = e?.response?.data?.msg || "Đặt lịch thất bại";
+          toast.error(msg);
+        } finally {
+          setSubmitting(false);
+        }
+      }
+    });
   }
 
   return (
@@ -372,6 +388,16 @@ export default function Booking() {
           </div>
         </div>
       )}
+
+      {/* CONFIRMATION DIALOG */}
+      <ConfirmDialog
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ ...confirmModal, open: false })}
+        type="info"
+      />
     </div>
   );
 

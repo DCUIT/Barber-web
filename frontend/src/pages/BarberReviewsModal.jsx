@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import API from "../api";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 function Stars({ rating = 0 }) {
   const v = Number(rating || 0);
@@ -36,6 +37,13 @@ export default function BarberReviewsModal({ barber, onClose, onSubmitted }) {
 
   const [loading, setLoading] = useState(false);
   const [reviews, setReviews] = useState([]);
+
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: () => {}
+  });
 
   const [bookingId, setBookingId] = useState("");
   const [rating, setRating] = useState(5);
@@ -78,29 +86,38 @@ export default function BarberReviewsModal({ barber, onClose, onSubmitted }) {
       return;
     }
 
-    setLoading(true);
-    try {
-      await API.post(
-        "/reviews",
-        {
-          bookingId,
-          rating: Number(rating),
-          comment: comment || "",
-        },
-        authHeader
-      );
+    setConfirmModal({
+      open: true,
+      title: "Xác nhận gửi đánh giá",
+      message: "Bạn có chắc chắn muốn gửi đánh giá này không?",
+      onConfirm: async () => {
+        setConfirmModal({ open: false });
+        setLoading(true);
+        try {
+          await API.post(
+            "/reviews",
+            {
+              bookingId,
+              rating: Number(rating),
+              comment: comment || "",
+            },
+            authHeader
+          );
 
-      setBookingId("");
-      setComment("");
-      setRating(5);
+          toast.success("Tạo review thành công");
+          setBookingId("");
+          setComment("");
+          setRating(5);
 
-      if (onSubmitted) onSubmitted();
-      onClose?.();
-    } catch (error) {
-      toast.error(error?.response?.data?.msg || "Tạo review thất bại");
-    } finally {
-      setLoading(false);
-    }
+          if (onSubmitted) onSubmitted();
+          onClose?.();
+        } catch (error) {
+          toast.error(error?.response?.data?.msg || "Tạo review thất bại");
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   if (!barber) return null;
@@ -201,6 +218,14 @@ export default function BarberReviewsModal({ barber, onClose, onSubmitted }) {
           Lưu ý: Server chỉ cho phép review khi booking status = Completed.
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ open: false })}
+      />
     </div>
   );
 }

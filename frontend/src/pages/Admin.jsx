@@ -269,29 +269,41 @@ export default function Admin() {
   // Logic CRUD Dịch vụ
   const handleServiceSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      const data = { 
-        ...serviceForm, 
-        price: Number(serviceForm.price) || 0, 
-        duration: Number(serviceForm.duration) || 0 
-      };
 
-      if (editingId) {
-        await API.put(`/services/${editingId}`, data);
-        toast.success("Cập nhật dịch vụ thành công");
-      } else {
-        const imageUrl = serviceForm.image; // Giả sử đã có URL từ upload hoặc nhập tay
-        await API.post("/services", { ...data, image: imageUrl });
-        toast.success("Thêm dịch vụ thành công");
+    const isEditing = !!editingId;
+    const action = isEditing ? "cập nhật" : "thêm";
+
+    setConfirmModal({
+      open: true,
+      title: `Xác nhận ${action} dịch vụ`,
+      message: `Bạn có chắc chắn muốn ${action} dịch vụ này không?`,
+      onConfirm: async () => {
+        setConfirmModal({ open: false });
+        setLoading(true);
+        try {
+          const data = {
+            ...serviceForm,
+            price: Number(serviceForm.price) || 0,
+            duration: Number(serviceForm.duration) || 0
+          };
+
+          if (editingId) {
+            await API.put(`/services/${editingId}`, data);
+            toast.success("Cập nhật dịch vụ thành công");
+          } else {
+            const imageUrl = serviceForm.image; // Giả sử đã có URL từ upload hoặc nhập tay
+            await API.post("/services", { ...data, image: imageUrl });
+            toast.success("Thêm dịch vụ thành công");
+          }
+          // Reset form và editingId sau khi submit
+          setServiceForm({ name: "", price: "", duration: "", image: "", description: "" });
+          setEditingId(null);
+          fetchData();
+        } catch (err) {
+          toast.error(err?.response?.data?.msg || "Lỗi xử lý dịch vụ");
+        } finally { setLoading(false); }
       }
-      // Reset form và editingId sau khi submit
-      setServiceForm({ name: "", price: "", duration: "", image: "", description: "" });
-      setEditingId(null);
-      fetchData();
-    } catch (err) { 
-      toast.error(err?.response?.data?.msg || "Lỗi xử lý dịch vụ"); 
-    } finally { setLoading(false); }
+    });
   };
 
   const deleteService = async (id) => {
@@ -333,22 +345,34 @@ export default function Admin() {
   // Logic CRUD Barber
   const handleBarberSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      const data = { ...barberForm, experience: Number(barberForm.experience) };
-      if (editingId) {
-        await API.put(`/barbers/${editingId}`, data);
-        toast.success("Cập nhật Barber thành công");
-      } else {
-        await API.post("/barbers", { ...data, avatar: barberForm.avatar });
-        toast.success("Thêm Barber thành công");
+
+    const isEditing = !!editingId;
+    const action = isEditing ? "cập nhật" : "thêm";
+
+    setConfirmModal({
+      open: true,
+      title: `Xác nhận ${action} Barber`,
+      message: `Bạn có chắc chắn muốn ${action} Barber này không?`,
+      onConfirm: async () => {
+        setConfirmModal({ open: false });
+        setLoading(true);
+        try {
+          const data = { ...barberForm, experience: Number(barberForm.experience) };
+          if (editingId) {
+            await API.put(`/barbers/${editingId}`, data);
+            toast.success("Cập nhật Barber thành công");
+          } else {
+            await API.post("/barbers", { ...data, avatar: barberForm.avatar });
+            toast.success("Thêm Barber thành công");
+          }
+          // Reset form và editingId sau khi submit
+          setBarberForm({ name: "", specialty: "", experience: "", avatar: "" });
+          setEditingId(null);
+          fetchData();
+        } catch (err) { toast.error(err?.response?.data?.msg || "Lỗi xử lý Barber"); }
+        finally { setLoading(false); }
       }
-      // Reset form và editingId sau khi submit
-      setBarberForm({ name: "", specialty: "", experience: "", avatar: "" });
-      setEditingId(null);
-      fetchData();
-    } catch (err) { toast.error(err?.response?.data?.msg || "Lỗi xử lý Barber"); }
-    finally { setLoading(false); }
+    });
   };
 
   const deleteBarber = async (id) => {

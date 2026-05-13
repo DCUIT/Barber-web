@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import API from "../api";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -14,6 +15,13 @@ export default function Profile() {
   );
 
   const [loading, setLoading] = useState(false);
+
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: () => {}
+  });
   const [profile, setProfile] = useState({
     name: "",
     avatar: "",
@@ -87,37 +95,45 @@ export default function Profile() {
     e.preventDefault();
     if (!token) return;
 
-    setLoading(true);
-    try {
-      if (role === "barber") {
-        await API.put(
-          "/barber/me",
-          {
-            avatar: profile.avatar || "",
-            experienceYears: Number(profile.experience) || 0,
-            specialty: profile.specialty || "",
-            workingHours: profile.workingHours || {},
-            dayOff: profile.dayOff || {},
-          },
-          authHeader
-        );
-      } else {
-        await API.put(
-          "/auth/me",
-          {
-            name: profile.name || "",
-            avatar: profile.avatar || "",
-            phone: profile.phone || "",
-          },
-          authHeader
-        );
+    setConfirmModal({
+      open: true,
+      title: "Xác nhận cập nhật profile",
+      message: "Bạn có chắc chắn muốn cập nhật thông tin cá nhân không?",
+      onConfirm: async () => {
+        setConfirmModal({ open: false });
+        setLoading(true);
+        try {
+          if (role === "barber") {
+            await API.put(
+              "/barber/me",
+              {
+                avatar: profile.avatar || "",
+                experienceYears: Number(profile.experience) || 0,
+                specialty: profile.specialty || "",
+                workingHours: profile.workingHours || {},
+                dayOff: profile.dayOff || {},
+              },
+              authHeader
+            );
+          } else {
+            await API.put(
+              "/auth/me",
+              {
+                name: profile.name || "",
+                avatar: profile.avatar || "",
+                phone: profile.phone || "",
+              },
+              authHeader
+            );
+          }
+          toast.success("Cập nhật profile thành công");
+        } catch (err) {
+          toast.error(err?.response?.data?.msg || "Cập nhật thất bại");
+        } finally {
+          setLoading(false);
+        }
       }
-      toast.success("Cập nhật profile thành công");
-    } catch (err) {
-      toast.error(err?.response?.data?.msg || "Cập nhật thất bại");
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const handleChangePassword = async (e) => {
@@ -132,23 +148,31 @@ export default function Profile() {
       return;
     }
 
-    setLoading(true);
-    try {
-      await API.put(
-        "/auth/change-password",
-        {
-          currentPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword,
-        },
-        authHeader
-      );
-      toast.success("Đổi mật khẩu thành công");
-      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-    } catch (err) {
-      toast.error(err?.response?.data?.msg || "Đổi mật khẩu thất bại");
-    } finally {
-      setLoading(false);
-    }
+    setConfirmModal({
+      open: true,
+      title: "Xác nhận đổi mật khẩu",
+      message: "Bạn có chắc chắn muốn đổi mật khẩu không?",
+      onConfirm: async () => {
+        setConfirmModal({ open: false });
+        setLoading(true);
+        try {
+          await API.put(
+            "/auth/change-password",
+            {
+              currentPassword: passwordForm.currentPassword,
+              newPassword: passwordForm.newPassword,
+            },
+            authHeader
+          );
+          toast.success("Đổi mật khẩu thành công");
+          setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        } catch (err) {
+          toast.error(err?.response?.data?.msg || "Đổi mật khẩu thất bại");
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   return (
@@ -344,6 +368,14 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ open: false })}
+      />
     </div>
   );
 }

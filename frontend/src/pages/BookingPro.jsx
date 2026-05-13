@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api";
 import Toast from "../components/Toast";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 function formatDateInput(d) {
   if (!(d instanceof Date) || isNaN(d)) return "";
@@ -30,6 +31,13 @@ export default function BookingPro() {
   const [submitting, setSubmitting] = useState(false);
 
   const [toast, setToast] = useState({ open: false, type: "success", message: "" });
+
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: () => {}
+  });
 
   useEffect(() => {
     if (!token) {
@@ -111,36 +119,44 @@ export default function BookingPro() {
       return;
     }
 
-    setSubmitting(true);
-    try {
-      await API.post(
-        "/bookings",
-        {
-          barberId: selectedBarberId,
-          serviceId: selectedServiceId,
-          bookingDate,
-          bookingTime: selectedTime,
-          note: note || "",
-        },
-        authHeader
-      );
+    setConfirmModal({
+      open: true,
+      title: "Xác nhận đặt lịch",
+      message: "Bạn có chắc muốn đặt lịch hẹn này?",
+      onConfirm: async () => {
+        setConfirmModal({ open: false });
+        setSubmitting(true);
+        try {
+          await API.post(
+            "/bookings",
+            {
+              barberId: selectedBarberId,
+              serviceId: selectedServiceId,
+              bookingDate,
+              bookingTime: selectedTime,
+              note: note || "",
+            },
+            authHeader
+          );
 
-      setToast({ open: true, type: "success", message: "Đặt lịch thành công!" });
-      setNote("");
-      setSelectedTime("");
+          setToast({ open: true, type: "success", message: "Đặt lịch thành công!" });
+          setNote("");
+          setSelectedTime("");
 
-      API.get(
-        `/bookings/calendar?barberId=${encodeURIComponent(selectedBarberId)}&date=${encodeURIComponent(bookingDate)}`,
-        authHeader
-      )
-        .then((res) => setAvailableSlots(res.data?.slots || []))
-        .catch(() => setAvailableSlots([]));
-    } catch (e) {
-      const msg = e?.response?.data?.msg || "Đặt lịch thất bại";
-      setToast({ open: true, type: "error", message: msg });
-    } finally {
-      setSubmitting(false);
-    }
+          API.get(
+            `/bookings/calendar?barberId=${encodeURIComponent(selectedBarberId)}&date=${encodeURIComponent(bookingDate)}`,
+            authHeader
+          )
+            .then((res) => setAvailableSlots(res.data?.slots || []))
+            .catch(() => setAvailableSlots([]));
+        } catch (e) {
+          const msg = e?.response?.data?.msg || "Đặt lịch thất bại";
+          setToast({ open: true, type: "error", message: msg });
+        } finally {
+          setSubmitting(false);
+        }
+      }
+    });
   }
 
   return (
@@ -263,6 +279,16 @@ export default function BookingPro() {
         />
       )}
     </div>
+
+    {/* CONFIRMATION DIALOG */}
+    <ConfirmDialog
+      open={confirmModal.open}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      onConfirm={confirmModal.onConfirm}
+      onCancel={() => setConfirmModal({ ...confirmModal, open: false })}
+      type="info"
+    />
   );
 }
 
