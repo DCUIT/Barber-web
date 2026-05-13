@@ -82,7 +82,7 @@ export default function Home() {
 
 
       {/* HERO SECTION - Refined layout */}
-      <section className="relative h-[650px] flex items-center px-4 md:px-[10%] overflow-hidden bg-black">
+      <section className="relative min-h-[500px] lg:h-[650px] flex items-center px-4 md:px-[10%] py-12 lg:py-0 overflow-hidden bg-black">
         {/* Background Image with Overlay */}
         <div 
           className="absolute inset-0 z-0 bg-cover bg-center opacity-60"
@@ -90,13 +90,13 @@ export default function Home() {
         ></div>
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent z-1"></div>
 
-        <div className="relative z-10 w-full flex flex-col lg:flex-row justify-between items-center gap-12">
+        <div className="relative z-10 w-full flex flex-col lg:flex-row justify-between items-center gap-8 lg:gap-12">
           {/* Left Content */}
           <div className="max-w-2xl text-center lg:text-left">
-            <h1 className="text-5xl md:text-7xl font-black text-[#c5a059] leading-tight mb-4 drop-shadow-2xl">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-[#c5a059] leading-tight mb-4 drop-shadow-2xl">
               THE CUTTING <br /> EDGE BARBER
             </h1>
-            <p className="text-white text-lg md:text-xl tracking-[0.2em] font-light mb-8 opacity-90 uppercase">
+            <p className="text-white text-base md:text-xl tracking-[0.2em] font-light mb-8 opacity-90 uppercase">
               Chăm sóc toàn diện cho quý ông đích thực
             </p>
             <button 
@@ -256,4 +256,3 @@ export default function Home() {
     </div>
   );
 }
-

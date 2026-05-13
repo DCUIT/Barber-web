@@ -4,9 +4,11 @@ import { formatCurrency as formatPrice } from "../utils/formatPrice"; // Giả s
 import toast from "react-hot-toast";
 import { useSocket } from "../context/SocketContext";
 
+import RevenueChart from "../components/RevenueChart";
 import { useAuth } from "../context/AuthContext";
 import ConfirmDialog from "../components/ConfirmDialog";
 import notificationService from "../services/notificationService";
+import "./adminDashboardStyles.css";
 
 
 const TABS = { DASHBOARD: "dashboard", SERVICES: "services", BARBERS: "barbers", BOOKINGS: "bookings", USERS: "users" };
@@ -15,17 +17,26 @@ const TAB_LABELS = {
   [TABS.DASHBOARD]: "Bảng điều khiển",
   [TABS.BOOKINGS]: "Quản lý lịch hẹn",
   [TABS.SERVICES]: "Quản lý dịch vụ",
-  [TABS.BARBERS]: "Đội ngũ Stylists",
+  [TABS.BARBERS]: "Đội ngũ Barber",
   [TABS.USERS]: "Quản lý người dùng"
 };
 
 export default function Admin() {
+  // (TODO) Dashboard quick actions sẽ được render ở tab Dashboard
+
   const [activeTab, setActiveTab] = useState(TABS.DASHBOARD);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [services, setServices] = useState([]);
   const [barbers, setBarbers] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState(null);
+  const [dashboardStats, setDashboardStats] = useState({
+    bookingsToday: 0, bookingsWeekly: 0,
+    revenueToday: 0, revenueWeekly: 0,
+    clientsToday: 0, clientsWeekly: 0
+  });
+  const [chartData, setChartData] = useState([]);
 
   // Form states cho Dịch vụ & Barber
   const [serviceForm, setServiceForm] = useState({ name: "", price: "", duration: "", image: "", description: "" });
@@ -79,13 +90,28 @@ export default function Admin() {
         const chartData = Array.isArray(statsRes.data) ? statsRes.data : [];
         const revenue = chartData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
 
-        // setDashboardChartData(chartData); // disabled recharts
+        setChartData(chartData);
+
+        // Tính toán các chỉ số nhanh
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStat = chartData.find(s => s.date === todayStr) || { count: 0, revenue: 0 };
+        const newClientsToday = usersRes.data.filter(u => u.createdAt?.startsWith(todayStr)).length;
 
         setStats({
           totalBookings: bookingsRes.data.totalCount || allBookings.length,
           totalRevenue: revenue,
           totalBarbers: barbersRes.data.length,
           totalUsers: usersRes.data.length
+        });
+
+        setDashboardStats({
+          bookingsToday: todayStat.count || 0,
+          bookingsWeekly: allBookings.length,
+          revenueToday: todayStat.revenue || 0,
+          revenueWeekly: revenue,
+          // Giả lập logic Client từ Users data
+          clientsToday: newClientsToday,
+          clientsWeekly: usersRes.data.length
         });
       }
 
@@ -132,7 +158,7 @@ export default function Admin() {
   }, [activeTab]);
 
   // Notifications (DB + realtime)
-  const [notifications, setNotifications] = useState([]);
+  const [_, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Socket.io integration
@@ -359,280 +385,359 @@ export default function Admin() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100 text-gray-800">
-      {/* SIDEBAR (desktop) */}
-      <aside className="w-64 bg-black text-white p-6 hidden md:block">
-        <div className="text-[#d4a373] font-bold text-xl mb-10 tracking-widest uppercase">Hệ Thống Barber</div>
-        <nav className="space-y-4">
-          <button onClick={() => setActiveTab(TABS.DASHBOARD)} className={`w-full text-left p-3 rounded ${activeTab === TABS.DASHBOARD ? "bg-[#d4a373] text-black" : "hover:bg-gray-900"}`}>
-            <i className="fas fa-chart-line mr-3"></i> Thống kê
+    <div className="flex h-screen overflow-hidden bg-[#0f0f0f] text-[#e5e7eb] admin-dash">
+      <style>{`
+        .gold-accent { color: #c4a47c; }
+        .gold-bg { background-color: #c4a47c; }
+        .card-bg { background-color: #1a1a1a; border: 1px solid #2d2d2d; }
+        .sidebar-item.active { background-color: #c4a47c20; color: #c4a47c; }
+      `}</style>
+
+      {/* SIDEBAR OVERLAY FOR MOBILE */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* SIDEBAR */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#121212] border-r border-[#2d2d2d] flex-shrink-0 flex flex-col transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0`}>
+        <div className="p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 gold-bg rounded-lg text-black">
+              <i className="fas fa-cut w-6 h-6 flex items-center justify-center"></i>
+            </div>
+            <span className="font-bold text-sm tracking-tighter leading-tight gold-accent uppercase">THE GENT'S<br/>GROOMING LOUNGE</span>
+          </div>
+          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 p-2">
+            <i className="fas fa-times"></i>
           </button>
-          <button onClick={() => setActiveTab(TABS.BOOKINGS)} className={`w-full text-left p-3 rounded ${activeTab === TABS.BOOKINGS ? "bg-[#d4a373] text-black" : "hover:bg-gray-900"}`}>
-            <i className="fas fa-calendar-alt mr-3"></i> Lịch hẹn
-          </button>
-          <button onClick={() => setActiveTab(TABS.SERVICES)} className={`w-full text-left p-3 rounded ${activeTab === TABS.SERVICES ? "bg-[#d4a373] text-black" : "hover:bg-gray-900"}`}>
-            <i className="fas fa-cut mr-3"></i> Dịch vụ
-          </button>
-          <button onClick={() => setActiveTab(TABS.BARBERS)} className={`w-full text-left p-3 rounded ${activeTab === TABS.BARBERS ? "bg-[#d4a373] text-black" : "hover:bg-gray-900"}`}>
-            <i className="fas fa-user-friends mr-3"></i> Stylists
-          </button>
-          <button onClick={() => setActiveTab(TABS.USERS)} className={`w-full text-left p-3 rounded ${activeTab === TABS.USERS ? "bg-[#d4a373] text-black" : "hover:bg-gray-900"}`}>
-            <i className="fas fa-users mr-3"></i> Người dùng
-          </button>
+        </div>
+        <nav className="mt-4 px-4 space-y-2 flex-1">
+          {[
+            { id: TABS.DASHBOARD, label: "Dashboard", icon: "fas fa-th-large" },
+            { id: TABS.BOOKINGS, label: "Appointments", icon: "fas fa-calendar-alt" },
+            { id: TABS.USERS, label: "Clients", icon: "fas fa-users" },
+            { id: TABS.BARBERS, label: "Barbers", icon: "fas fa-user-tie" },
+            { id: TABS.SERVICES, label: "Services", icon: "fas fa-cut" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setIsSidebarOpen(false);
+              }}
+              className={`sidebar-item w-full flex items-center p-3 rounded-lg transition-all ${
+                activeTab === tab.id ? "active" : "text-gray-400"
+              }`}
+            >
+              <i className={`${tab.icon} mr-3 w-5`}></i> {tab.label}
+            </button>
+          ))}
         </nav>
+        <div className="p-4 border-t border-[#2d2d2d]">
+          <button className="sidebar-item w-full flex items-center p-3 rounded-lg text-gray-400">
+            <i className="fas fa-cog mr-3"></i> Settings
+          </button>
+        </div>
       </aside>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 min-w-0 p-4 sm:p-8 text-gray-800 overflow-x-hidden">
-        {/* Mobile Tab Bar */}
-        <div className="md:hidden mb-6 w-full">
-          <div className="flex gap-2 flex-wrap justify-center px-1 pb-3">
-
-
-
-            {Object.values(TABS).map((tab) => {
-              const icons = {
-                [TABS.DASHBOARD]: "fas fa-chart-line",
-                [TABS.BOOKINGS]: "fas fa-calendar-alt",
-                [TABS.SERVICES]: "fas fa-cut",
-                [TABS.BARBERS]: "fas fa-user-friends",
-                [TABS.USERS]: "fas fa-users",
-              };
-
-              return (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all border shadow-sm ${
-                    activeTab === tab
-                      ? "bg-black text-[#d4a373] border-black"
-                      : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
-                  }`}
-                  type="button"
-                >
-                  <i className={icons[tab]}></i>
-                  {TAB_LABELS[tab]}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800">{TAB_LABELS[activeTab]}</h2>
-          <div className="flex items-center gap-4">
-            <div className="text-gray-600 font-medium">Chào mừng, Quản trị viên</div>
-
-            {/* Notification Center */}
-            <div className="relative">
-              <button
-                type="button"
-                className="relative text-white hover:text-[#d4a373] transition"
-                onClick={markAllRead}
-              >
-                <i className="fas fa-bell text-xl"></i>
-                {unreadCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {notifications.length > 0 && (
-                <div className="absolute right-0 mt-2 w-[360px] bg-white border rounded-xl shadow-lg overflow-hidden z-10">
-                  <div className="p-3 border-b flex items-center justify-between">
-                    <div>
-                      <div className="font-bold">Realtime notifications</div>
-                      <div className="text-xs text-gray-500">Mới nhất trước</div>
-                    </div>
-                    <div className="text-xs text-gray-500">{unreadCount} chưa đọc</div>
-                  </div>
-                  <div className="max-h-72 overflow-y-auto">
-                    {notifications.map((n) => (
-                      <div key={n.id} className="p-3 border-b last:border-b-0 hover:bg-gray-50">
-                        <div className="text-sm font-bold">{n.title}</div>
-                        <div className="text-sm text-gray-700">{n.message}</div>
-
-                        <div className="text-xs text-gray-400 mt-1">
-                          <span className="font-semibold">Loại:</span> {n.type || "booking"}
-                          {" · "}
-                          <span className="font-semibold">Trạng thái:</span> {n.isRead ? "Đã đọc" : "Chưa đọc"}
-                        </div>
-
-                        <div className="text-[10px] text-gray-400">{new Date(n.createdAt).toLocaleString()}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* MOBILE TOP BAR (Mới thêm) */}
+        <div className="md:hidden flex items-center justify-between p-4 bg-[#0f0f0f] border-b border-[#2d2d2d]">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 gold-bg rounded text-black text-xs">
+              <i className="fas fa-cut"></i>
             </div>
+            <span className="font-bold text-xs gold-accent tracking-tighter uppercase">THE GENT'S Admin</span>
           </div>
+          <button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 text-gray-400 hover:text-white transition"
+          >
+            <i className="fas fa-bars text-xl"></i>
+          </button>
         </div>
 
-        {loading && (
-          <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
-            Đang tải dữ liệu...
-          </div>
-        )}
-
-
-        {/* DASHBOARD TAB */}
-        {activeTab === TABS.DASHBOARD && stats && (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
-                <div className="text-gray-500 text-sm uppercase font-bold">Tổng lịch hẹn</div>
-                <div className="text-3xl font-bold">{stats.totalBookings}</div>
-              </div>
-              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-                <div className="text-gray-500 text-sm uppercase font-bold">Doanh thu</div>
-                <div className="text-3xl font-bold">{formatPrice(stats.totalRevenue)}</div>
-              </div>
-              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-                <div className="text-gray-500 text-sm uppercase font-bold">Tổng khách hàng</div>
-                <div className="text-3xl font-bold">{stats.totalUsers}</div>
-              </div>
-              <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
-                <div className="text-gray-500 text-sm uppercase font-bold">Tổng Stylists</div>
-                <div className="text-3xl font-bold">{stats.totalBarbers}</div>
-              </div>
-            </div>
-
-            {/* Recharts charts disabled to prevent runtime crash; keep layout stable */}
-            <div className="text-sm text-gray-500 col-span-full">
-              Charts disabled (recharts runtime error)
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-xl shadow-sm col-span-1 lg:col-span-2">
-                <div className="text-sm text-gray-500">
-                  Recharts charts disabled to avoid runtime “Invalid hook call” from recharts.
-                </div>
-              </div>
-            </div>
-
-          </div>
-        )}
-
-        {/* BOOKINGS TABLE */}
-        {activeTab === TABS.BOOKINGS && (
-          <div className="bg-white rounded-xl shadow-sm">
-            {/* Search and Filter Controls */}
-            <div className="p-4 border-b flex flex-wrap gap-4 items-center">
-              <input
-                type="text"
-                placeholder="Tìm kiếm khách hàng..."
-                className="border p-2 rounded flex-1 min-w-[200px]"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <select
-                className="border p-2 rounded min-w-[150px]"
-                value={filterBarberId}
-                onChange={(e) => setFilterBarberId(e.target.value)}
-              >
-                <option value="">Lọc theo Stylist</option>
-                {barbers.map((b) => (
-                  <option key={b._id} value={b._id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="border p-2 rounded min-w-[150px]"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <option value="">Lọc theo trạng thái</option>
-                <option value="Pending">Pending</option>
-                <option value="Accepted">Accepted</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-              <button
-                onClick={fetchData}
-                className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded font-bold"
-              >
-                Áp dụng
-              </button>
-            </div>
-            
-            <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="p-4 font-bold">Khách hàng</th>
-                  <th className="p-4 font-bold">Dịch vụ</th>
-                  <th className="p-4 font-bold">Stylist</th>
-                  <th className="p-4 font-bold">Ngày & Giờ</th>
-                  <th className="p-4 font-bold">Trạng thái</th>
-                  <th className="p-4 font-bold text-right">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(bookings || []).map((b) => (
-                  <tr key={b._id} className="border-b hover:bg-gray-50 transition">
-                    <td className="p-4">{b.userId?.name || b.userId?.username || "Guest"}</td>
-                    <td className="p-4">{b.serviceId?.name}</td>
-                    <td className="p-4">{b.barberId?.name}</td>
-                    <td className="p-4 text-sm">
-                      {b.bookingDate} <br /> <span className="text-gray-400">{b.bookingTime}</span>
-                    </td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        b.status === 'Accepted' ? 'bg-green-100 text-green-700' : 
-                        b.status === 'Cancelled' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {b.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right flex items-center justify-end gap-3">
-                      <select 
-                        className="border rounded p-1 text-sm"
-                        value={b.status}
-                        onChange={(e) => updateBookingStatus(b._id, e.target.value)}
-                      >
-                        <option value="Pending">Pending</option>
-                        <option value="Accepted">Accept</option>
-                        <option value="Completed">Complete</option>
-                        <option value="Cancelled">Cancel</option>
-                      </select>
-                      <button onClick={() => deleteBooking(b._id)} className="text-red-500 hover:text-red-700">
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {/* Pagination Controls */}
-          {totalBookingsCount > itemsPerPage && (
-            <div className="flex justify-center items-center gap-4 p-4 border-t">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="bg-gray-200 hover:bg-gray-300 p-2 rounded disabled:opacity-50"
-              >
-                Trước
-              </button>
-              <span className="font-semibold">Trang {currentPage} / {Math.ceil(totalBookingsCount / itemsPerPage)}</span>
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(totalBookingsCount / itemsPerPage)))}
-                disabled={currentPage === Math.ceil(totalBookingsCount / itemsPerPage)}
-                className="bg-gray-200 hover:bg-gray-300 p-2 rounded disabled:opacity-50"
-              >
-                Sau
-              </button>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-8">
+          {loading && (
+            <div className="mb-6 bg-yellow-900/20 text-yellow-500 px-4 py-2 rounded-lg text-xs font-medium border border-yellow-900/50 w-fit">
+              <i className="fas fa-spinner fa-spin mr-2"></i> Đang cập nhật dữ liệu...
             </div>
           )}
+
+          {/* TAB CONTENTS */}
+        {activeTab === TABS.DASHBOARD && stats && (
+          <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6">
+            {/* LEFT COLUMN */}
+            <div className="w-full lg:col-span-8 space-y-6">
+              
+              {/* TOP CARDS */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="card-bg p-5 rounded-2xl">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-yellow-500/10 rounded-lg text-yellow-600"><i className="fas fa-calendar-check text-xs"></i></div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400">Total Bookings</span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-bold">{dashboardStats.bookingsToday}</span> <span className="text-[10px] text-gray-500">Today</span>
+                        <span className="text-lg font-bold ml-auto">{dashboardStats.bookingsWeekly}</span> <span className="text-[10px] text-gray-500">Weekly</span>
+                    </div>
+                </div>
+                <div className="card-bg p-5 rounded-2xl">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-green-500/10 rounded-lg text-green-600"><i className="fas fa-money-bill-wave text-xs"></i></div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400">Revenue</span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-xl font-bold">{(dashboardStats.revenueToday / 1000000).toFixed(1)}M</span> <span className="text-[10px] text-gray-500">Today</span>
+                        <span className="text-lg font-bold ml-auto text-white">{(dashboardStats.revenueWeekly / 1000000).toFixed(1)}M</span> <span className="text-[10px] text-gray-500">Weekly</span>
+                    </div>
+                </div>
+                <div className="card-bg p-5 rounded-2xl">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-blue-500/10 rounded-lg text-blue-600"><i className="fas fa-users text-xs"></i></div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400">New Clients</span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-bold">{dashboardStats.clientsToday}</span> <span className="text-[10px] text-gray-500">Today</span>
+                        <span className="text-lg font-bold ml-auto">{dashboardStats.clientsWeekly}</span> <span className="text-[10px] text-gray-500">Weekly</span>
+                    </div>
+                </div>
+              </div>
+
+              {/* TABLE SECTION */}
+              <div className="card-bg rounded-2xl overflow-hidden">
+                <div className="p-5 font-semibold border-b border-[#2d2d2d] flex justify-between items-center">
+                  Upcoming Bookings
+                  <button onClick={() => setActiveTab(TABS.BOOKINGS)} className="text-xs gold-accent hover:underline">View All</button>
+                </div>
+                <table className="w-full text-sm">
+                  <thead className="bg-[#252525] text-gray-500">
+                    <tr>
+                      <th className="py-3 px-5 text-left font-medium uppercase text-[10px]">Time</th>
+                      <th className="py-3 px-5 text-left font-medium uppercase text-[10px]">Client</th>
+                      <th className="py-3 px-5 text-left font-medium uppercase text-[10px]">Barber</th>
+                      <th className="py-3 px-5 text-left font-medium uppercase text-[10px]">Service</th>
+                      <th className="py-3 px-5 text-left font-medium uppercase text-[10px]">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#2d2d2d]">
+                    {(bookings || []).slice(0, 5).map((b) => (
+                      <tr key={b._id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-4 px-5 font-mono text-[#c4a47c]">{b.bookingTime}</td>
+                        <td className="py-4 px-5 font-medium">{b.userId?.name || b.userId?.username || 'Guest'}</td>
+                        <td className="py-4 px-5">
+                          <div className="flex items-center gap-2">
+                            <img src={b.barberId?.avatar || "https://i.pravatar.cc/30"} className="w-6 h-6 rounded-full border border-[#2d2d2d]" alt="" />
+                            <span>{b.barberId?.name || 'N/A'}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-5 text-gray-400">{b.serviceId?.name || 'N/A'}</td>
+                        <td className="py-4 px-5">
+                          <span className={`text-[10px] px-2 py-1 rounded-full border ${
+                            b.status === 'Accepted' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 
+                            b.status === 'Pending' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' : 
+                            'bg-gray-500/10 text-gray-500 border-gray-500/20'
+                          }`}>
+                            {b.status === 'Accepted' ? 'Checked-in' : b.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {bookings.length === 0 && (
+                      <tr><td colSpan="5" className="p-12 text-center text-gray-500 italic">No appointments found</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN */}
+            <div className="w-full lg:col-span-4 space-y-6">
+              {/* CHART */}
+              <div className="card-bg p-6 rounded-2xl">
+                <h3 className="font-semibold mb-4">Weekly Revenue</h3>
+                <div className="h-48">
+                  <RevenueChart data={chartData} />
+                </div>
+              </div>
+
+              {/* QUICK ACTIONS */}
+              <div className="card-bg p-6 rounded-2xl">
+                <h3 className="font-semibold mb-4">Quick Actions</h3>
+                <div className="space-y-3">
+                  <button 
+                    onClick={() => setActiveTab(TABS.BOOKINGS)}
+                    className="w-full py-3 bg-[#252525] hover:bg-[#333] transition border border-[#3d3d3d] rounded-xl flex items-center justify-center gap-3"
+                  >
+                    <i className="fas fa-plus-circle gold-accent"></i> Add Appointment
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const first = bookings?.find((b) => b.status === 'Pending');
+                      if (first) updateBookingStatus(first._id, 'Accepted');
+                      else toast.error("No pending appointments to check-in");
+                    }}
+                    className="w-full py-3 bg-[#252525] hover:bg-[#333] transition border border-[#3d3d3d] rounded-xl flex items-center justify-center gap-3"
+                  >
+                    <i className="fas fa-check-square gold-accent"></i> Check-In Client
+                  </button>
+                </div>
+              </div>
+
+              {/* BARBER PERFORMANCE */}
+              <div className="card-bg p-6 rounded-2xl">
+                <h3 className="font-semibold mb-4">Barber Performance</h3>
+                <p className="text-[10px] text-gray-500 uppercase font-bold mb-4 tracking-widest">Top Barbers by Booking</p>
+                <div className="space-y-5">
+                  {barbers.slice(0, 3).map((barber, idx) => {
+                    const count = bookings.filter(b => b.barberId?._id === barber._id).length;
+                    const percentage = Math.min(100, Math.round((count / (stats.totalBookings || 1)) * 100 * 2)); // Giả lập tỷ lệ
+                    return (
+                      <div key={barber._id} className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="flex items-center gap-2">
+                            <img src={barber.avatar || `https://i.pravatar.cc/150?u=${idx}`} className="w-6 h-6 rounded-full" alt="" />
+                            {barber.name}
+                          </span>
+                          <span className="text-gray-400 font-mono text-xs">{percentage}%</span>
+                        </div>
+                        <div className="w-full bg-[#333] h-1.5 rounded-full overflow-hidden">
+                          <div className="gold-bg h-full transition-all duration-1000" style={{ width: `${percentage}%` }}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
         )}
+
+      {/* BOOKINGS TABLE */}
+
+      {activeTab === TABS.BOOKINGS && (
+        <div className="bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden">
+          {/* Search and Filter Controls */}
+          <div className="p-4 border-b border-gray-800 flex flex-wrap gap-4 items-center">
+            <input
+              type="text"
+              placeholder="Tìm kiếm khách hàng..."
+              className="border p-2 rounded flex-1 min-w-[200px]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <select
+              className="dark-input p-2 rounded min-w-[150px]"
+              value={filterBarberId}
+              onChange={(e) => setFilterBarberId(e.target.value)}
+            >
+              <option value="">Lọc theo Stylist</option>
+              {barbers.map((b) => (
+                <option key={b._id} value={b._id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+            <select
+              className="dark-input p-2 rounded min-w-[150px]"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="">Lọc theo trạng thái</option>
+              <option value="Pending">Pending</option>
+              <option value="Accepted">Accepted</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+            <button
+              onClick={fetchData}
+              className="gold-bg text-black px-6 py-2 rounded font-bold hover:opacity-90 transition"
+            >
+              Áp dụng
+            </button>
+          </div>
+          
+          <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-[#252525] text-gray-400 text-xs uppercase">
+              <tr>
+                <th className="p-4 font-bold">Khách hàng</th>
+                <th className="p-4 font-bold">Dịch vụ</th>
+                <th className="p-4 font-bold">Stylist</th>
+                <th className="p-4 font-bold">Ngày & Giờ</th>
+                <th className="p-4 font-bold">Trạng thái</th>
+                <th className="p-4 font-bold text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(bookings || []).map((b) => (
+                <tr key={b._id} className="border-b border-gray-800 hover:bg-[#252525] transition">
+                  <td className="p-4">{b.userId?.name || b.userId?.username || "Guest"}</td>
+                  <td className="p-4">{b.serviceId?.name}</td>
+                  <td className="p-4">{b.barberId?.name}</td>
+                  <td className="p-4 text-sm">
+                    {b.bookingDate} <br /> <span className="text-gray-500">{b.bookingTime}</span>
+                  </td>
+                  <td className="p-4">
+                    <span className={`px-2 py-1 rounded text-xs font-bold ${
+                      b.status === 'Accepted' ? 'bg-green-900/40 text-green-500' : 
+                      b.status === 'Cancelled' ? 'bg-red-900/40 text-red-500' : 'bg-yellow-900/40 text-yellow-500'
+                    }`}>
+                      {b.status}
+                    </span>
+                  </td>
+                  <td className="p-4 text-right flex items-center justify-end gap-3">
+                    <select 
+                      className="dark-input rounded p-1 text-sm"
+                      value={b.status}
+                      onChange={(e) => updateBookingStatus(b._id, e.target.value)}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Accepted">Accept</option>
+                      <option value="Completed">Complete</option>
+                      <option value="Cancelled">Cancel</option>
+                    </select>
+                    <button onClick={() => deleteBooking(b._id)} className="text-red-500 hover:text-red-700">
+                      <i className="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {/* Pagination Controls */}
+        {totalBookingsCount > itemsPerPage && (
+          <div className="flex justify-center items-center gap-4 p-4 border-t border-gray-800">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded disabled:opacity-30"
+            >
+              Trước
+            </button>
+            <span className="font-semibold">Trang {currentPage} / {Math.ceil(totalBookingsCount / itemsPerPage)}</span>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(totalBookingsCount / itemsPerPage)))}
+              disabled={currentPage === Math.ceil(totalBookingsCount / itemsPerPage)}
+              className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded disabled:opacity-30"
+            >
+              Sau
+            </button>
+          </div>
+        )}
+              </div>
+      )}
 
         {/* USERS TABLE */}
         {activeTab === TABS.USERS && (
-          <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
+          <div className="bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-[#252525] text-gray-400 text-xs uppercase">
                 <tr>
                   <th className="p-4 font-bold">Tài khoản</th>
                   <th className="p-4 font-bold">Vai trò</th>
@@ -642,18 +747,18 @@ export default function Admin() {
               </thead>
               <tbody>
                 {users.map((u) => (
-                  <tr key={u._id} className="border-b hover:bg-gray-50 transition">
+                  <tr key={u._id} className="border-b border-gray-800 hover:bg-[#252525] transition">
                     <td className="p-4 font-medium">{u.name || u.username}</td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
+                        u.role === 'admin' ? 'bg-purple-900/40 text-purple-400' : 'bg-gray-800 text-gray-400'
                       }`}>
                         {u.role}
                       </span>
                     </td>
                     <td className="p-4 flex gap-2">
                       <select 
-                        className="text-xs border rounded p-1"
+                        className="text-xs dark-input rounded p-1"
                         value={u.role}
                         onChange={(e) => updateUserRole(u._id, e.target.value)}
                       >
@@ -664,7 +769,7 @@ export default function Admin() {
                       <button 
                         onClick={() => toggleBlockUser(u._id, u.isBlocked)}
                         className={`text-xs px-2 py-1 rounded font-bold ${u.isBlocked ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-                        title={u.isBlocked ? "Bỏ chặn" : "Chặn người dùng"}
+                        title={u.isBlocked ? "Unlock" : "Lock"}
                       >
                         {u.isBlocked ? <i className="fas fa-lock"></i> : <i className="fas fa-lock-open"></i>}
                       </button>
@@ -683,31 +788,31 @@ export default function Admin() {
         {/* SERVICES MANAGEMENT */}
         {activeTab === TABS.SERVICES && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-xl shadow-sm h-fit">
+            <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gray-800 h-fit">
               <h3 className="font-bold mb-4">{editingId ? "Sửa dịch vụ" : "Thêm dịch vụ mới"}</h3>
               <form onSubmit={handleServiceSubmit} className="space-y-3">
-                <input placeholder="Tên dịch vụ" className="w-full border p-2 rounded" value={serviceForm.name} onChange={e => setServiceForm({...serviceForm, name: e.target.value})} required />
-                <input placeholder="Giá (VNĐ)" type="number" className="w-full border p-2 rounded" value={serviceForm.price} onChange={e => setServiceForm({...serviceForm, price: e.target.value})} required />
-                <input placeholder="Thời gian (phút)" type="number" className="w-full border p-2 rounded" value={serviceForm.duration} onChange={e => setServiceForm({...serviceForm, duration: e.target.value})} required />
+                <input placeholder="Tên dịch vụ" className="w-full dark-input p-2 rounded" value={serviceForm.name} onChange={e => setServiceForm({...serviceForm, name: e.target.value})} required />
+                <input placeholder="Giá (VNĐ)" type="number" className="w-full dark-input p-2 rounded" value={serviceForm.price} onChange={e => setServiceForm({...serviceForm, price: e.target.value})} required />
+                <input placeholder="Thời gian (phút)" type="number" className="w-full dark-input p-2 rounded" value={serviceForm.duration} onChange={e => setServiceForm({...serviceForm, duration: e.target.value})} required />
                 <div className="flex items-center gap-2">
-                  <input type="file" accept="image/*" className="flex-1 border p-2 rounded" onChange={async (e) => {
+                  <input type="file" accept="image/*" className="flex-1 dark-input p-2 rounded text-xs" onChange={async (e) => {
                     const imageUrl = await handleImageUpload(e.target.files[0], 'service');
                     if (imageUrl) setServiceForm({...serviceForm, image: imageUrl});
                   }} disabled={uploadingImage} />
                   {uploadingImage && <i className="fas fa-spinner fa-spin text-gray-500"></i>}
                 </div>
                 {serviceForm.image && <img src={serviceForm.image} alt="Preview" className="w-24 h-24 object-cover rounded mt-2" />}
-                <input placeholder="Hoặc dán Link ảnh trực tiếp" className="w-full border p-2 rounded" value={serviceForm.image} onChange={e => setServiceForm({...serviceForm, image: e.target.value})} />
-                <textarea placeholder="Mô tả" className="w-full border p-2 rounded" value={serviceForm.description} onChange={e => setServiceForm({...serviceForm, description: e.target.value})} />
+                <input placeholder="Hoặc dán Link ảnh" className="w-full dark-input p-2 rounded text-xs" value={serviceForm.image} onChange={e => setServiceForm({...serviceForm, image: e.target.value})} />
+                <textarea placeholder="Mô tả" className="w-full dark-input p-2 rounded" value={serviceForm.description} onChange={e => setServiceForm({...serviceForm, description: e.target.value})} />
                 <div className="flex gap-2">
-                  <button type="submit" className="flex-1 bg-black text-white p-2 rounded font-bold">Lưu</button>
-                  {editingId && <button type="button" onClick={() => {setEditingId(null); setServiceForm({name:"",price:"",duration:"",image:"",description:""})}} className="bg-gray-200 p-2 rounded">Hủy</button>}
+                  <button type="submit" className="flex-1 gold-bg text-black p-2 rounded font-bold">Lưu</button>
+                  {editingId && <button type="button" onClick={() => {setEditingId(null); setServiceForm({name:"",price:"",duration:"",image:"",description:""})}} className="bg-gray-700 p-2 rounded">Hủy</button>}
                 </div>
               </form>
             </div>
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-x-auto">
+            <div className="lg:col-span-2 bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-[#252525] text-gray-400 text-xs uppercase">
                   <tr>
                     <th className="p-4">Dịch vụ</th>
                     <th className="p-4">Giá</th>
@@ -717,7 +822,7 @@ export default function Admin() {
                 </thead>
                 <tbody>
                   {services.map(s => (
-                    <tr key={s._id} className="border-b">
+                    <tr key={s._id} className="border-b border-gray-800 hover:bg-[#252525]">
                       <td className="p-4 font-bold">{s.name}</td>
                       <td className="p-4">{formatPrice(s.price)}</td>
                       <td className="p-4">{s.duration}m</td>
@@ -736,30 +841,30 @@ export default function Admin() {
         {/* BARBERS MANAGEMENT */}
         {activeTab === TABS.BARBERS && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-xl shadow-sm h-fit">
+            <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gray-800 h-fit">
               <h3 className="font-bold mb-4">{editingId ? "Sửa Stylist" : "Thêm Stylist mới"}</h3>
               <form onSubmit={handleBarberSubmit} className="space-y-3">
-                <input placeholder="Tên Stylist" className="w-full border p-2 rounded" value={barberForm.name} onChange={e => setBarberForm({...barberForm, name: e.target.value})} required />
-                <input placeholder="Chuyên môn (ví dụ: Fade & Undercut)" className="w-full border p-2 rounded" value={barberForm.specialty} onChange={e => setBarberForm({...barberForm, specialty: e.target.value})} required />
-                <input placeholder="Kinh nghiệm (năm)" type="number" className="w-full border p-2 rounded" value={barberForm.experience} onChange={e => setBarberForm({...barberForm, experience: e.target.value})} required />
+                <input placeholder="Tên Stylist" className="w-full dark-input p-2 rounded" value={barberForm.name} onChange={e => setBarberForm({...barberForm, name: e.target.value})} required />
+                <input placeholder="Chuyên môn" className="w-full dark-input p-2 rounded" value={barberForm.specialty} onChange={e => setBarberForm({...barberForm, specialty: e.target.value})} required />
+                <input placeholder="Kinh nghiệm (năm)" type="number" className="w-full dark-input p-2 rounded" value={barberForm.experience} onChange={e => setBarberForm({...barberForm, experience: e.target.value})} required />
                 <div className="flex items-center gap-2">
-                  <input type="file" accept="image/*" className="flex-1 border p-2 rounded" onChange={async (e) => {
+                  <input type="file" accept="image/*" className="flex-1 dark-input p-2 rounded text-xs" onChange={async (e) => {
                     const avatarUrl = await handleImageUpload(e.target.files[0], 'barber');
                     if (avatarUrl) setBarberForm({...barberForm, avatar: avatarUrl});
                   }} disabled={uploadingImage} />
                   {uploadingImage && <i className="fas fa-spinner fa-spin text-gray-500"></i>}
                 </div>
                 {barberForm.avatar && <img src={barberForm.avatar} alt="Preview" className="w-24 h-24 object-cover rounded-full mt-2" />}
-                <input placeholder="Hoặc dán Link Avatar trực tiếp" className="w-full border p-2 rounded" value={barberForm.avatar} onChange={e => setBarberForm({...barberForm, avatar: e.target.value})} />
+                <input placeholder="Hoặc dán Link Avatar" className="w-full dark-input p-2 rounded text-xs" value={barberForm.avatar} onChange={e => setBarberForm({...barberForm, avatar: e.target.value})} />
                 <div className="flex gap-2">
-                  <button type="submit" className="flex-1 bg-black text-white p-2 rounded font-bold">Lưu</button>
-                  {editingId && <button type="button" onClick={() => {setEditingId(null); setBarberForm({name:"",specialty:"",experience:"",avatar:""})}} className="bg-gray-200 p-2 rounded">Hủy</button>}
+                  <button type="submit" className="flex-1 gold-bg text-black p-2 rounded font-bold">Lưu</button>
+                  {editingId && <button type="button" onClick={() => {setEditingId(null); setBarberForm({name:"",specialty:"",experience:"",avatar:""})}} className="bg-gray-700 p-2 rounded">Hủy</button>}
                 </div>
               </form>
             </div>
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-x-auto">
+            <div className="lg:col-span-2 bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-[#252525] text-gray-400 text-xs uppercase">
                   <tr>
                     <th className="p-4">Stylist</th>
                     <th className="p-4">Chuyên môn</th>
@@ -769,12 +874,12 @@ export default function Admin() {
                 </thead>
                 <tbody>
                   {barbers.map(b => (
-                    <tr key={b._id} className="border-b">
+                    <tr key={b._id} className="border-b border-gray-800 hover:bg-[#252525]">
                       <td className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                        <div className="w-10 h-10 rounded-full bg-gray-800 overflow-hidden border border-gray-700">
                           {b.avatar && <img src={b.avatar} alt="" className="w-full h-full object-cover" />}
                         </div>
-                        <span className="font-bold">{b.name}</span>
+                        <span className="font-bold text-sm">{b.name}</span>
                       </td>
                       <td className="p-4">{b.specialty}</td>
                       <td className="p-4">{b.experienceYears ?? b.experience ?? 0} năm</td>
@@ -789,7 +894,8 @@ export default function Admin() {
             </div>
           </div>
         )}
-      </main>
+        </main>
+      </div>
 
       {/* CONFIRMATION DIALOG */}
       <ConfirmDialog

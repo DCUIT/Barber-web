@@ -151,6 +151,12 @@ export default function Booking() {
 
   return (
     <div className="booking-shell">
+      <style>{`
+        @media (max-width: 1024px) {
+          .booking-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
+          .booking-step { border-right: none !important; padding-bottom: 2rem; border-bottom: 1px solid rgba(197, 160, 89, 0.1); }
+        }
+      `}</style>
       <header className="booking-header">
         <h2>SECURE YOUR NEXT CUT</h2>
         <p>Chọn dịch vụ và barber yêu thích của bạn</p>

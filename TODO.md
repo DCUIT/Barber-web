@@ -1,15 +1,12 @@
 # TODO
 
-## Admin UI upgrade (Option A)
-- [x] Update `frontend/src/pages/Admin.jsx` UI to match the requested admin dashboard concept (no copy-paste of provided HTML/CSS):
-  - [x] Refresh layout: keep dark sidebar + accent gold
-  - [x] Dashboard header/cards + section layout
-  - [x] Replace notification dropdown with a right-corner overlay panel style
-  - [x] Improve tables/buttons styling for bookings/services/barbers/users
-- [x] Ensure existing admin logic still works:
-  - [x] realtime notifications still fetch/update correctly
-  - [x] booking status update/delete still works
-  - [x] services/barbers/users CRUD still works
-- [x] Run frontend build/lint to confirm no runtime/import/hook errors.
-
-
+- [ ] Fix build failure in `frontend/src/pages/Admin.jsx` (currently JSX tag mismatch from dashboard insertion)
+- [ ] Restore original Admin.jsx structure (remove broken dashboard block)
+- [ ] Re-implement dashboard UI (dark/gold) safely
+- [ ] Add Quick Actions wiring:
+  - [ ] Add Appointment -> switch to BOOKINGS and open modal form
+  - [ ] Check-In Client -> PUT /bookings/:id/status Accepted
+  - [ ] Complete Service -> PUT /bookings/:id/status Completed
+  - [ ] Cancel Booking -> PUT /bookings/:id/status Cancelled
+- [ ] Ensure dashboard Upcoming table/booking status updates reflect real data
+- [ ] Run `cd frontend && npm run lint` and `cd frontend && npm run build`
