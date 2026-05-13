@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../style.css";
+import "./Booking.css";
+
 
 // NOTE: Đây là layout mô phỏng đúng mẫu HTML bạn cung cấp (The Cutting Edge - Đặt Lịch Hẹn).
 // Logic booking thật vẫn giữ: load services/barbers, lấy slots, submit /bookings.
@@ -148,91 +150,185 @@ export default function Booking() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      {/* Booking Form Area */}
-      <section id="booking" className="services" style={{ maxWidth: 900, width: "100%" }}>
-        <div className="booking-form" style={{ width: "100%" }}>
-            <h3>ĐẶT LỊCH HẸN</h3>
-          
-          <div className="form-group">
-            <label>1. CHỌN DỊCH VỤ</label>
-            <select value={selectedServiceId} onChange={(e) => setSelectedServiceId(e.target.value)}>
-              <option value="">Select a service...</option>
-              {services.map((s) => (
-                <option key={s._id} value={s._id}>
-                  {s.name} - {new Intl.NumberFormat("vi-VN").format(s.price)}đ
-                </option>
-              ))}
-            </select>
-          </div>
+    <div className="booking-shell">
+      <header className="booking-header">
+        <h2>SECURE YOUR NEXT CUT</h2>
+        <p>Chọn dịch vụ và barber yêu thích của bạn</p>
 
-          <div className="form-group">
-            <label>2. CHỌN THỢ</label>
-            <select value={selectedBarberId} onChange={(e) => setSelectedBarberId(e.target.value)}>
-              <option value="">Select staff...</option>
-              {barbers.map((b) => (
-                <option key={b._id} value={b._id}>
-                  {b.name} ({b.specialty || "Barber"})
-                </option>
-              ))}
-            </select>
-          </div>
 
-          <div className="form-group">
-            <label>3. SELECT DATE & TIME</label>
-            <input type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} />
+      </header>
 
-            <div className="time-slots" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: "10px", marginTop: "15px" }}>
-              {availableSlots.length === 0 ? (
-              <div className="text-gray-500 text-center py-2" style={{ gridColumn: "span 2" }}>
-                  {loadingSlots ? "Đang tải khung giờ..." : "Không có khung giờ trống"}
+      <div className="booking-grid">
+        {/* 1) SELECT SERVICES */}
+        <section className="booking-step">
+          <h3>
+            <span>1</span> SELECT SERVICES
+          </h3>
+
+          {services.length === 0 ? (
+            <div style={{ opacity: 0.7, fontSize: 14 }}>Đang tải dịch vụ...</div>
+          ) : (
+            services.map((s) => {
+              const active = String(s._id) === String(selectedServiceId);
+              return (
+                <div
+                  key={s._id}
+                  className={`booking-card ${active ? "active" : ""}`}
+                  onClick={() => setSelectedServiceId(s._id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setSelectedServiceId(s._id);
+                  }}
+                >
+                  <h4>{s.name}</h4>
+                  <p>{new Intl.NumberFormat("vi-VN").format(s.price)}đ</p>
                 </div>
-              ) : (
-                availableSlots.map((t) => (
+              );
+            })
+          )}
+        </section>
 
+        {/* 2) SELECT BARBER */}
+        <section className="booking-step">
+          <h3>
+            <span>2</span> SELECT BARBER
+          </h3>
+
+          <div style={{ marginTop: 12 }}>
+            {barbers.slice(0, 4).map((b) => {
+
+              const active = String(b._id) === String(selectedBarberId);
+              return (
+                <div
+                  key={b._id}
+                  className={`booking-card ${active ? "active" : ""}`}
+                  onClick={() => setSelectedBarberId(b._id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setSelectedBarberId(b._id);
+                  }}
+                >
+                  <h4>{b.name}</h4>
+                  <p>{b.specialty || "Master Barber"}</p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* 3) CHOOSE DATE & TIME */}
+        <section className="booking-step">
+          <h3>
+            <span>3</span> CHOOSE DATE &amp; TIME
+          </h3>
+
+          <div>
+            <input
+              className="booking-input"
+              type="date"
+              value={bookingDate}
+              onChange={(e) => setBookingDate(e.target.value)}
+            />
+
+          </div>
+
+
+          <div className="time-slots">
+            {availableSlots.length === 0 ? (
+              <div
+                style={{
+                  gridColumn: "1 / -1",
+                  opacity: 0.75,
+                  fontSize: 14,
+                  textAlign: "center",
+                }}
+              >
+                {loadingSlots ? "Đang tải khung giờ..." : "Không có khung giờ trống"}
+              </div>
+            ) : (
+              availableSlots.map((t) => {
+                const active = selectedTime === t;
+                return (
                   <button
                     key={t}
                     type="button"
-                    className={`btn-submit ${selectedTime === t ? "" : "opacity-50"}`}
-                    style={{
-                      margin: 0, 
-                      padding: "8px", 
-                      fontSize: "14px", 
-                      background: selectedTime === t ? "#d4a373" : "#333", 
-                      color: selectedTime === t ? "black" : "white",
-                      fontWeight: "bold"
-                    }}
+                    className={`booking-slot ${active ? "active" : ""}`}
                     onClick={() => setSelectedTime(t)}
                   >
                     {t}
                   </button>
-                ))
-              )}
-            </div>
-          </div>
+                );
+              })
+            )}
 
-          <div className="form-group" style={{ marginTop: "20px" }}>
-            <label>GHI CHÚ (TÙY CHỌN)</label>
-            <textarea 
-              rows={3} 
-              placeholder="Bạn có yêu cầu gì đặc biệt không?"
+          </div>
+        </section>
+
+        {/* 4) YOUR DETAILS */}
+        <section className="booking-step">
+          <h3>
+            <span>4</span> YOUR DETAILS
+          </h3>
+
+          <div>
+            <textarea
+              className="booking-input"
+              rows={3}
+              placeholder="Ghi chú (tùy chọn)"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              /* Removed inline style for border, let CSS handle it */
             />
           </div>
 
-          <button 
-            className="btn-submit" 
-            type="button" 
-            disabled={submitting} 
-            onClick={handleConfirm}
-            style={{ marginTop: "20px" }}
-          >
-            {submitting ? "ĐANG XỬ LÝ..." : "XÁC NHẬN ĐẶT LỊCH"}
-          </button>
-        </div>
-      </section>
+          <div className="booking-summary">
+            <h4>BOOKING SUMMARY</h4>
+            <p>
+              <span>Service</span>
+              <span>{selectedService?.name || "-"}</span>
+            </p>
+            <p>
+              <span>Barber</span>
+              <span>
+                {barbers.find((b) => b._id === selectedBarberId)?.name || "-"}
+              </span>
+            </p>
+
+            <p>
+              <span>Time</span>
+              <span>
+                {(() => {
+                  if (!bookingDate || !selectedTime) return "-";
+                  const [yyyy, mm, dd] = String(bookingDate).split("-");
+                  const formatted = yyyy && mm && dd ? `${dd}/${mm}/${yyyy}` : bookingDate;
+                  return `${selectedTime} (${formatted})`;
+                })()}
+
+              </span>
+            </p>
+
+            <p>
+              <span>Total</span>
+              <span>
+                {selectedService
+                  ? `${new Intl.NumberFormat("vi-VN").format(selectedService.price)}đ`
+                  : "-"}
+              </span>
+            </p>
+
+
+            <button
+              type="button"
+              className="booking-confirm"
+              disabled={submitting}
+              onClick={handleConfirm}
+            >
+              {submitting ? "ĐANG XỬ LÝ..." : "CONFIRM BOOKING"}
+            </button>
+          </div>
+        </section>
+      </div>
 
       {/* Success Modal */}
       {showSuccessModal && lastBooking && (
@@ -243,7 +339,7 @@ export default function Booking() {
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Đặt lịch thành công!</h2>
             <p className="text-gray-500 mb-6 text-sm">Cảm ơn bạn đã tin tưởng The Cutting Edge.</p>
-            
+
             <div className="bg-gray-50 rounded-xl p-4 text-left space-y-2 mb-6">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Dịch vụ:</span>
@@ -251,24 +347,26 @@ export default function Booking() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Thợ:</span>
-                <span className="font-bold">{barbers.find(b => b._id === selectedBarberId)?.name}</span>
+                <span className="font-bold">{barbers.find((b) => b._id === selectedBarberId)?.name}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Thời gian:</span>
-                <span className="font-bold text-[#d4a373]">{lastBooking.bookingTime} - {lastBooking.bookingDate}</span>
+                <span className="font-bold text-[#d4a373]">
+                  {lastBooking.bookingTime} - {lastBooking.bookingDate}
+                </span>
               </div>
             </div>
 
-            <button 
+            <button
               onClick={() => setShowSuccessModal(false)}
               className="w-full btn-submit m-0 py-3"
             >
               Đóng
             </button>
-
           </div>
         </div>
       )}
     </div>
   );
+
 }

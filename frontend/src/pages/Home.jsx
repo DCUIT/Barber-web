@@ -79,25 +79,7 @@ export default function Home() {
 
   return (
     <div className="home-wrapper">
-      {/* Top Branding Bar (Inspired by Header) */}
-      <div className="bg-black border-b-2 border-[#c5a059] py-4 px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="text-[#c5a059] font-black text-2xl tracking-tighter">
-          THE CUTTING EDGE <span className="text-white font-light text-sm ml-2">EST. 2024</span>
-        </div>
-        <div className="flex items-center gap-6">
-          <nav className="hidden lg:block">
-            <ul className="flex gap-6 text-xs font-bold text-white uppercase tracking-widest">
-              <li className="text-[#c5a059] cursor-pointer">Trang chủ</li>
-              <li className="hover:text-[#c5a059] cursor-pointer transition-colors">Dịch vụ</li>
-              <li className="hover:text-[#c5a059] cursor-pointer transition-colors">Đội ngũ</li>
-              <li className="hover:text-[#c5a059] cursor-pointer transition-colors">Liên hệ</li>
-            </ul>
-          </nav>
-          <div className="bg-[#c5a059] text-black px-4 py-1 rounded-sm font-bold text-sm">
-            HOTLINE: 0224 259 338
-          </div>
-        </div>
-      </div>
+
 
       {/* HERO SECTION - Refined layout */}
       <section className="relative h-[650px] flex items-center px-4 md:px-[10%] overflow-hidden bg-black">

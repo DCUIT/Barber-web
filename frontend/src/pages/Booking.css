@@ -1,0 +1,258 @@
+/* Booking layout inspired by the provided static template.
+   Uses the existing booking logic/state in Booking.jsx.
+*/
+
+:root {
+  --ce-gold: #d4a373;
+  --ce-dark: #0b0b0b;
+  --ce-card: rgba(0, 0, 0, 0.55);
+  --ce-border: rgba(212, 163, 115, 0.35);
+  --ce-text: #ffffff;
+}
+
+.booking-shell {
+  min-height: 100vh;
+  background: radial-gradient(900px 500px at 20% 0%, rgba(212,163,115,0.15), rgba(0,0,0,0)) ,
+    linear-gradient(180deg, #070707, #0b0b0b 60%, #070707);
+  color: var(--ce-text);
+  padding: 64px 16px 96px;
+}
+
+.booking-header {
+  max-width: 1200px;
+  margin: 0 auto 28px;
+  text-align: center;
+}
+
+.booking-header h2 {
+  margin: 0;
+  font-family: "Oswald", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-size: 48px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ce-gold);
+}
+
+.booking-header p {
+  margin: 10px auto 0;
+  max-width: 620px;
+  color: rgba(255,255,255,0.7);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.booking-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.booking-step {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(212,163,115,0.25);
+  border-radius: 14px;
+  padding: 18px 16px;
+}
+
+.booking-step h3 {
+  margin: 0 0 14px;
+  font-family: "Oswald", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.82);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.booking-step h3 span {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--ce-gold);
+  color: #000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.booking-card {
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 12px 12px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.booking-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212,163,115,0.55);
+}
+
+.booking-card.active {
+  background: rgba(212,163,115,0.98);
+  border-color: rgba(212,163,115,0.98);
+  color: #fff;
+}
+
+
+.booking-card h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.booking-card p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.booking-input {
+  width: 100%;
+  padding: 12px 12px;
+
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  outline: none;
+}
+
+.booking-input[type="date"] {
+  color: #fff !important;
+}
+
+/* Show date value in white (webkit browsers) */
+.booking-input[type="date"]:invalid {
+  color: #fff !important;
+}
+
+.booking-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(2);
+}
+
+
+.booking-input[type="date"]::-webkit-datetime-edit,
+.booking-input[type="date"]::-webkit-datetime-edit-text,
+.booking-input[type="date"]::-webkit-datetime-edit-month-field,
+.booking-input[type="date"]::-webkit-datetime-edit-day-field,
+.booking-input[type="date"]::-webkit-datetime-edit-year-field {
+  color: #fff !important;
+}
+
+
+.booking-select option {
+  color: #fff !important;
+  background: #000;
+}
+
+
+
+
+/* make the dropdown text white for visibility */
+.booking-select {
+  color: #fff !important;
+}
+
+
+.time-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.booking-slot {
+  background: #fff;
+  border: 1px solid rgba(212,163,115,0.55);
+  color: #000 !important;
+
+  padding: 10px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 800;
+  transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+
+.booking-slot:hover { transform: translateY(-1px); }
+
+.booking-slot.active {
+  background: var(--ce-gold);
+  border-color: var(--ce-gold);
+  color: #fff;
+}
+
+
+.booking-summary {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(212,163,115,0.25);
+}
+
+.booking-summary h4 {
+  margin: 0 0 10px;
+  font-family: "Oswald", system-ui;
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.9);
+}
+
+.booking-summary p {
+  margin: 8px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.75);
+}
+
+.booking-summary p span {
+  color: rgba(255,255,255,0.95);
+  font-weight: 800;
+}
+
+.booking-confirm {
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--ce-gold);
+  color: #000;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease;
+}
+
+.booking-confirm:hover { transform: translateY(-1px); filter: brightness(1.02); }
+
+.booking-confirm:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .booking-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .booking-shell { padding-top: 42px; }
+  .booking-grid { grid-template-columns: 1fr; }
+  .booking-header h2 { font-size: 34px; }
+  .time-slots { grid-template-columns: 1fr; }
+}
+
+/* Success modal tweaks are handled by existing Tailwind-ish classes; keep this file focused on page layout. */
+
