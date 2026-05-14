@@ -30,9 +30,9 @@ Deploy project online + có hướng dẫn chạy.
 ---
 
 # README
-- [ ] Add screenshots
+- [x] Add screenshots
 - [x] Add install guide
-- [ ] Add deploy links
+- [x] Add deploy links
 
 ---
 
