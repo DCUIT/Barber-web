@@ -18,8 +18,30 @@ export async function seedDatabase() {
     return;
   }
 
+  // seed Alex & Sam accounts (Mongo only)
+
+  const alexUsername = (process.env.SEED_ALEX_USERNAME || 'alex').toLowerCase();
+  const samUsername = (process.env.SEED_SAM_USERNAME || 'sam').toLowerCase();
+  const defaultUserPassword = process.env.SEED_USERS_PASSWORD || '123456';
+
+
+  const alexExisting = await User.findOne({ username: alexUsername });
+  if (!alexExisting) {
+    const passwordHash = await bcrypt.hash(defaultUserPassword, 10);
+    await User.create({ username: alexUsername, name: 'Alex', passwordHash, role: 'user' });
+    console.log('Seeded user: Alex');
+  }
+
+
+  const samExisting = await User.findOne({ username: samUsername });
+  if (!samExisting) {
+    const passwordHash = await bcrypt.hash(defaultUserPassword, 10);
+    await User.create({ username: samUsername, name: 'Sam', passwordHash, role: 'user' });
+    console.log('Seeded user: Sam');
+  }
 
   const existingAdmin = await User.findOne({ username: adminUsername });
+
   if (!existingAdmin) {
     const passwordHash = await bcrypt.hash(adminPassword, 10);
     await User.create({ username: adminUsername, passwordHash, role: 'admin' });

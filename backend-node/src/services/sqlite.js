@@ -23,6 +23,7 @@ export function getSQLiteDB() {
       role TEXT NOT NULL CHECK(role IN ('user','barber','admin'))
     );
 
+
     CREATE TABLE IF NOT EXISTS services (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
