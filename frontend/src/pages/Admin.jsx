@@ -417,7 +417,7 @@ export default function Admin() {
             <div className="p-2 gold-bg rounded-lg text-black">
               <i className="fas fa-cut w-6 h-6 flex items-center justify-center"></i>
             </div>
-            <span className="font-bold text-sm tracking-tighter leading-tight gold-accent uppercase">THE GENT'S<br/>GROOMING LOUNGE</span>
+            <span className="font-bold text-sm tracking-tighter leading-tight gold-accent uppercase">SYSTEM<br/>MANAGEMENT</span>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 p-2">
             <i className="fas fa-times"></i>
