@@ -5,6 +5,22 @@ Làm booking system hoàn chỉnh (service + barber + date + time slot + status 
 
 ---
 
+## Booking page UI redesign (steps layout)
+- [ ] Làm trang `frontend/src/pages/Booking.jsx` có bố cục “booking steps 4 cột” như mẫu:
+  1) Select services
+  2) Select barber
+  3) Select date & time
+  4) Your details + booking summary + confirm button
+- [ ] Cập nhật CSS (màu gỗ/vintage: gold, wood background) bằng cách thêm/mở rộng `frontend/src/bookingStyle.css`
+- [ ] Giữ nguyên logic hiện có trong Booking.jsx:
+  - selectedServiceId, selectedBarberId, bookingDate, selectedTime, note, handleConfirm
+  - availableSlots, loadingSlots, submitting
+  - showSuccessModal logic
+- [ ] Responsive: desktop 4 cột, mobile 1 cột (hoặc 2 cột)
+
+---
+
+
 # Backend
 
 ## 1. Booking model
